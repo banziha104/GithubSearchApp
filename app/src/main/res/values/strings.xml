@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">GithubSearchApp</string>
+
+    <string name="main_api_tab_name">API</string>
+    <string name="main_local_tab_name">로컬</string>
 </resources>
