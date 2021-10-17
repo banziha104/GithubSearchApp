@@ -28,7 +28,7 @@ import javax.inject.Inject
 class GithubFavoriteUserDaoTests : LocalDatabaseTests(){
     private lateinit var dao: GithubFavoriteUserDao
     private val entity: GithubFavoriteUserEntity by lazy {
-        GithubFavoriteUserEntity(null, "testName", "http://testAvatar")
+        GithubFavoriteUserEntity("testName", "http://testAvatar")
     }
 
 

@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.lyj.githubsearchapp.data.source.local.entity.GithubFavoriteUserEntity
-import com.lyj.githubsearchapp.domain.repository.GithubUserFavoriteTableContract.CommitResult
+import com.lyj.githubsearchapp.domain.repository.CommitResult
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
@@ -30,9 +30,9 @@ interface GithubFavoriteUserDao {
         findAllOnce()
             .flatMap { storedDatas ->
                 if (entity.login in storedDatas.map { it.login }) {
-                    insert(entity).andThen(Single.just(CommitResult.INSERTED))
+                    insert(entity).andThen(Single.just(CommitResult.Inserted))
                 } else {
-                    delete(entity.login).andThen(Single.just(CommitResult.DELETED))
+                    delete(entity.login).andThen(Single.just(CommitResult.Deleted))
                 }
             }
 

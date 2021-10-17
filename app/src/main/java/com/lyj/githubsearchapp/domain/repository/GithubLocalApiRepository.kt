@@ -16,8 +16,11 @@ interface GithubUserFavoriteTableContract{
     fun observeGithubUserTable() : Flowable<List<GithubUserModel>>
     fun insertOrDeleteIfExist(model: GithubUserModel) : Single<CommitResult>
 
-    // insertOrDeleteIfExist 의 실행결과
-    enum class CommitResult{
-        INSERTED, DELETED
-    }
+}
+
+// insertOrDeleteIfExist 의 실행결과
+sealed interface CommitResult {
+    object Inserted : CommitResult
+    object Deleted : CommitResult
+    class Failed(t: Throwable) : CommitResult
 }
