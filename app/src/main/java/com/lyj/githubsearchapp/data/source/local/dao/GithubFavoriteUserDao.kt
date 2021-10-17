@@ -30,9 +30,9 @@ interface GithubFavoriteUserDao {
         findAllOnce()
             .flatMap { storedDatas ->
                 if (entity.login in storedDatas.map { it.login }) {
-                    insert(entity).andThen(Single.just(CommitResult.Inserted))
-                } else {
                     delete(entity.login).andThen(Single.just(CommitResult.Deleted))
+                } else {
+                    insert(entity).andThen(Single.just(CommitResult.Inserted))
                 }
             }
 
