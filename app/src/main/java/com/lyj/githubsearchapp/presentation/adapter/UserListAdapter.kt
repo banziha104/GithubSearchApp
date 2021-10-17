@@ -3,6 +3,9 @@ package com.lyj.githubsearchapp.presentation.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.lyj.githubsearchapp.R
 
@@ -22,6 +25,9 @@ class UserListAdapter : RecyclerView.Adapter<UserListAdapter.GithubUserListViewH
     }
 
     inner class GithubUserListViewHolder(view : View) : RecyclerView.ViewHolder(view){
-
+        val txtName : TextView = view.findViewById<TextView>(R.id.userItemTxtName)
+        val txtInitialSound : TextView = view.findViewById<TextView>(R.id.userItemTxtInitialSound)
+        val btnFavorite : ImageButton = view.findViewById<ImageButton>(R.id.userItemBtnFavorite)
+        val imgAvatar : ImageView = view.findViewById<ImageView>(R.id.userItemImgAvatar)
     }
 }
