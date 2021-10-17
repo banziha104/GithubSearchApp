@@ -1,6 +1,7 @@
 package com.lyj.githubsearchapp.data.source.remote.entity
 
 import com.google.gson.annotations.SerializedName
+import com.lyj.githubsearchapp.domain.model.GithubUserModel
 
 class UserListResponse {
 	data class Response(
@@ -51,7 +52,7 @@ class UserListResponse {
 		val receivedEventsUrl: String? = null,
 
 		@field:SerializedName("avatar_url")
-		val avatarUrl: String? = null,
+		override val avatarUrl: String? = null,
 
 		@field:SerializedName("events_url")
 		val eventsUrl: String? = null,
@@ -73,5 +74,8 @@ class UserListResponse {
 
 		@field:SerializedName("organizations_url")
 		val organizationsUrl: String? = null
-	)
+	) : GithubUserModel{
+		override val userName: String?
+			get() = login
+	}
 }
