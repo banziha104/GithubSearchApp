@@ -83,4 +83,6 @@ ext {
     androidTestRuleVersion='1.1.0'
     archTextVersion = '2.1.0'
     robolectricVersion = '4.4'
+    rxIdlerVersion = '0.11.0'
+    okHttpIdlerVersion = '1.0.0'
 }

@@ -113,8 +113,11 @@ dependencies {
     kaptTest "com.google.dagger:hilt-android-compiler:$hiltVersion"
     kaptAndroidTest "com.google.dagger:hilt-android-compiler:$hiltVersion"
 
+    androidTestImplementation "com.squareup.rx.idler:rx3-idler:$rxIdlerVersion"
+    androidTestImplementation "com.jakewharton.espresso:okhttp3-idling-resource:$okHttpIdlerVersion"
     androidTestImplementation "com.google.dagger:hilt-android-testing:$hiltVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressVersion"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-idling-resource:$espressVersion"
 }
