@@ -3,6 +3,7 @@ package com.lyj.githubsearchapp.data.source.remote
 import okhttp3.OkHttpClient
 import retrofit2.CallAdapter
 import retrofit2.Converter
+import retrofit2.Retrofit
 
 /**
  * Github 관련 API 서비스를 생성하는 구현 객체
@@ -27,7 +28,13 @@ class GithubApiGenerator(
 
     override fun <T> generateService(
         service: Class<T>,
-    ): T = TODO()
+    ): T = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(client)
+        .addCallAdapterFactory(callAdapter)
+        .addConverterFactory(converter)
+        .build()
+        .create(service)
 }
 
 /**
