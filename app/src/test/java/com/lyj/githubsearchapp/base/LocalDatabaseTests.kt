@@ -3,7 +3,11 @@ package com.lyj.githubsearchapp.base
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.lyj.githubsearchapp.data.repository.GithubLocalApiRepositoryImpl
 import com.lyj.githubsearchapp.data.source.local.LocalDataBase
+import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
+import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository
+import com.lyj.githubsearchapp.module.DatabaseModule
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -22,4 +26,10 @@ open class LocalDatabaseTests {
     val database : LocalDataBase = Room.inMemoryDatabaseBuilder(
         ApplicationProvider.getApplicationContext<Context>(), LocalDataBase::class.java
     ).build()
+
+    @BindValue
+    val dao : GithubFavoriteUserDao = database.githubFavoriteUserDao()
+
+    @BindValue
+    val repository : GithubLocalApiRepository = GithubLocalApiRepositoryImpl(dao)
 }

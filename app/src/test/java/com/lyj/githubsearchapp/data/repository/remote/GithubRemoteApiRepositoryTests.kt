@@ -24,6 +24,7 @@ class GithubRemoteApiRepositoryTests {
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
+    @Inject
     lateinit var service :  GithubUserApi
 
     @Before

@@ -16,6 +16,7 @@ import javax.inject.Inject
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [TestConfig.SDK_VERSION])
+@HiltAndroidTest
 class ObserveLocalUserListUseCaseTests : LocalDatabaseTests() {
 
     @get:Rule

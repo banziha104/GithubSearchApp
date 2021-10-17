@@ -5,8 +5,8 @@ import com.lyj.githubsearchapp.base.LocalDatabaseTests
 import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
 import com.lyj.githubsearchapp.data.source.local.entity.GithubFavoriteUserEntity
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
+import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository
-import com.lyj.githubsearchapp.domain.repository.GithubUserFavoriteTableContract.CommitResult
 import com.lyj.githubsearchapp.extension.testWithAwait
 import io.reactivex.rxjava3.core.Single
 import org.junit.*
@@ -22,10 +22,6 @@ import javax.inject.Inject
 @Config(sdk = [TestConfig.SDK_VERSION])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
-    @Inject
-    private lateinit var repository : GithubLocalApiRepository
-
-    private lateinit var dao: GithubFavoriteUserDao
     private val model: GithubUserModel by lazy {
         object : GithubUserModel{
             override val userName: String
@@ -37,7 +33,7 @@ class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
 
     @Before
     fun `00_테스트_셋업`() {
-        dao = database.githubFavoriteUserDao()
+
     }
 
 
@@ -47,6 +43,7 @@ class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
             .observeGithubUserTable()
             .testWithAwait()
             .assertValue {
+                println(it)
                 it.isEmpty()
             }
     }
@@ -65,7 +62,10 @@ class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
             .assertValue { (commitResult, datas) ->
                 val data: GithubFavoriteUserEntity? =
                     (datas as? List<GithubFavoriteUserEntity>)?.firstOrNull()
-                commitResult is CommitResult && commitResult == CommitResult.INSERTED &&
+
+                val data2 = datas as? List<GithubFavoriteUserEntity>
+                println("data : $data $data2 ${commitResult::class.java.simpleName}")
+                commitResult is CommitResult && commitResult == CommitResult.Inserted &&
                         data != null && data.login == model.userName
             }
     }
@@ -84,13 +84,9 @@ class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
             .assertValue { (commitResult, datas) ->
                 val data: GithubFavoriteUserEntity? =
                     (datas as? List<GithubFavoriteUserEntity>)?.firstOrNull()
-                commitResult is CommitResult && commitResult == CommitResult.DELETED &&
+                commitResult is CommitResult && commitResult == CommitResult.Deleted &&
                         data == null
             }
     }
 
-    @After
-    fun `99_테스트_종료`() {
-        database.close()
-    }
 }

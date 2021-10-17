@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [TestConfig.SDK_VERSION])
+@HiltAndroidTest
 class InsertOrDeleteUserModelUseCaseTests : LocalDatabaseTests() {
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
