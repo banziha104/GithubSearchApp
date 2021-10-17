@@ -8,6 +8,7 @@ import com.lyj.githubsearchapp.base.LocalDatabaseTests
 import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
 import com.lyj.githubsearchapp.data.source.local.entity.GithubFavoriteUserEntity
 import com.lyj.githubsearchapp.domain.repository.CommitResult
+import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository
 import com.lyj.githubsearchapp.extension.testWithAwait
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -23,16 +24,26 @@ import java.util.stream.Collectors
 import javax.inject.Inject
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [TestConfig.SDK_VERSION])
+@Config(application = HiltTestApplication::class, sdk = [TestConfig.SDK_VERSION])
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@HiltAndroidTest
 class GithubFavoriteUserDaoTests : LocalDatabaseTests() {
     private val entity: GithubFavoriteUserEntity by lazy {
         GithubFavoriteUserEntity("testName", "http://testAvatar")
     }
 
+    @get:Rule
+    var hiltRule = HiltAndroidRule(this)
+
+    @Inject
+    lateinit var repository: GithubLocalApiRepository
+
+    @Inject
+    lateinit var dao: GithubFavoriteUserDao
 
     @Before
     fun `00_테스트_셋업`() {
+        hiltRule.inject()
     }
 
 
@@ -48,6 +59,7 @@ class GithubFavoriteUserDaoTests : LocalDatabaseTests() {
 
     @Test
     fun `02_InsertOrDelete_호출시_Insert_되는지_확인`() {
+        // 첫 번쨰 호출시 insert 확인
         Single
             .concat(
                 dao.insertOrDeleteIfExists(entity),
@@ -63,10 +75,8 @@ class GithubFavoriteUserDaoTests : LocalDatabaseTests() {
                 commitResult is CommitResult && commitResult == CommitResult.Inserted &&
                         data != null && data.login == entity.login
             }
-    }
 
-    @Test
-    fun `03_한번_더_InsertOrDelete_호출시_데이터가_삭제되는지_확인`() {
+        // 두 번쨰 호출시 delete 확인
         Single
             .concat(
                 dao.insertOrDeleteIfExists(entity),
@@ -86,6 +96,5 @@ class GithubFavoriteUserDaoTests : LocalDatabaseTests() {
 
     @After
     fun `99_테스트_종료`() {
-        database.close()
     }
 }

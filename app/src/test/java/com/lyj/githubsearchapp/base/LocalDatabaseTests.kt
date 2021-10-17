@@ -11,6 +11,7 @@ import com.lyj.githubsearchapp.module.DatabaseModule
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
+import javax.inject.Singleton
 
 /***
  * LocalDataBase 를 실제로 기기에 설치된 데이터베이스가 아닌
@@ -23,13 +24,16 @@ import dagger.hilt.android.testing.UninstallModules
 open class LocalDatabaseTests {
 
     @BindValue
-    val database : LocalDataBase = Room.inMemoryDatabaseBuilder(
+    @Singleton
+    val localDataBase : LocalDataBase = Room.inMemoryDatabaseBuilder(
         ApplicationProvider.getApplicationContext<Context>(), LocalDataBase::class.java
     ).build()
 
     @BindValue
-    val dao : GithubFavoriteUserDao = database.githubFavoriteUserDao()
+    @Singleton
+    val githubFavoriteUserDao : GithubFavoriteUserDao = localDataBase.githubFavoriteUserDao()
 
     @BindValue
-    val repository : GithubLocalApiRepository = GithubLocalApiRepositoryImpl(dao)
+    @Singleton
+    val githubLocalApiRepository : GithubLocalApiRepository = GithubLocalApiRepositoryImpl(githubFavoriteUserDao)
 }

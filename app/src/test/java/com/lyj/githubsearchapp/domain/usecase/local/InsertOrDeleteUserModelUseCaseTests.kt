@@ -3,6 +3,7 @@ package com.lyj.githubsearchapp.domain.usecase.local
 import com.lyj.githubsearchapp.TestConfig
 import com.lyj.githubsearchapp.base.LocalDatabaseTests
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
+import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.extension.testWithAwait
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -41,10 +42,22 @@ class InsertOrDeleteUserModelUseCaseTests : LocalDatabaseTests() {
 
     @Test
     fun `실행테스트`(){
+        // 첫 번쨰 호출시 insert 확인
         insertOrDeleteUserModelUseCase
             .execute(model)
             .testWithAwait()
             .assertNoErrors()
-            .assertComplete()
+            .assertValue {
+                it is CommitResult.Inserted
+            }
+
+        // 두 번쨰 호출시 delete 확인
+        insertOrDeleteUserModelUseCase
+            .execute(model)
+            .testWithAwait()
+            .assertNoErrors()
+            .assertValue {
+                it is CommitResult.Deleted
+            }
     }
 }

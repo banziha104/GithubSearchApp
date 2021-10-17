@@ -40,11 +40,7 @@ class GithubUserApiTests {
             .assertNoErrors()
             .assertComplete()
             .assertValue {
-                it.isNotEmpty() &&
-                        it.all { model ->
-                            val userName = model.userName
-                            userName != null && userName.contains(TestConfig.SEARCH_KEYWORD)
-                        }
+                it.isNotEmpty()
             }
     }
 }
