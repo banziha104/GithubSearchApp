@@ -15,5 +15,4 @@ class ObserveLocalUserListUseCase @Inject constructor(
         repository
             .observeGithubUserTable()
             .subscribeOn(Schedulers.io())
-
 }
