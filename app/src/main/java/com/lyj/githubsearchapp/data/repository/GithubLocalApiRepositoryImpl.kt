@@ -12,8 +12,8 @@ import java.lang.NullPointerException
 class GithubLocalApiRepositoryImpl(
     private val dao: GithubFavoriteUserDao
 ) : GithubLocalApiRepository {
-    override fun observeGithubUserTable(): Flowable<List<GithubUserModel>> =
-        dao.observeFavoriteUserTable().map { list -> list.map { it } }
+    override fun observeGithubUserTable(): Single<List<GithubUserModel>> =
+        dao.findAllOnce().map { list -> list.map { it } }
 
     override fun insertOrDeleteIfExist(model: GithubUserModel): Single<CommitResult> {
         val entity = GithubFavoriteUserEntity(
