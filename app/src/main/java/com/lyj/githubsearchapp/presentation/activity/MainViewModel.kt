@@ -7,35 +7,32 @@ import com.lyj.githubsearchapp.R
 import com.lyj.githubsearchapp.common.utils.KoreanLangagueUtils
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
-import com.lyj.githubsearchapp.domain.usecase.local.ObserveLocalUserListUseCase
+import com.lyj.githubsearchapp.domain.usecase.local.GetLocalUserListUseCase
 import com.lyj.githubsearchapp.domain.usecase.remote.GetRemoteUserListUseCase
 import com.lyj.githubsearchapp.presentation.adapter.UserListData
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.subjects.BehaviorSubject
-import io.reactivex.rxjava3.subjects.PublishSubject
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     val getRemoteUserListUseCase: GetRemoteUserListUseCase,
     val insertOrDeleteUserModelUseCase: InsertOrDeleteUserModelUseCase,
-    val observeLocalUserListUseCase: ObserveLocalUserListUseCase
+    val getLocalUserListUseCase: GetLocalUserListUseCase
 ) : ViewModel() {
 
     companion object {
         val DEFAULT_TAB = MainTabType.API
     }
 
-    val currentTabType: MutableLiveData<MainTabType> by lazy {
+    val latestTabType: MutableLiveData<MainTabType> by lazy {
         MutableLiveData<MainTabType>(DEFAULT_TAB)
     }
 
 
     fun getData(
         targetData: List<GithubUserModel>,
-        localData: List<GithubUserModel>
+        localData: List<GithubUserModel>,
+        tabType: MainTabType
     ): List<UserListData> {
         val a = splitInitializeSoundData(targetData)
             .groupBy { (initialSound, _) -> initialSound }
@@ -46,7 +43,7 @@ class MainViewModel @Inject constructor(
                     .value
                     .sortedBy { list -> list.second.userName }
                     .mapIndexed { index, (initialSound, model) ->
-                        val isFavorite = currentTabType.value!!.checkFavorite.func(model,localData)
+                        val isFavorite = tabType.checkFavorite.func(model,localData)
                         if (index == 0) {
                             UserListData.GithubUserDataWithInitialSound(model, isFavorite, initialSound)
                         } else {

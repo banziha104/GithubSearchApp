@@ -2,13 +2,13 @@ package com.lyj.githubsearchapp.presentation.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jakewharton.rxbinding4.view.clicks
 import com.lyj.githubsearchapp.common.extension.android.TabLayoutEventType
 import com.lyj.githubsearchapp.common.extension.android.selectedObserver
+import com.lyj.githubsearchapp.common.extension.android.unwrappedValue
 import com.lyj.githubsearchapp.common.extension.lang.disposeByOnDestory
 import com.lyj.githubsearchapp.common.rx.RxLifecycleController
 import com.lyj.githubsearchapp.common.rx.RxLifecycleObserver
@@ -20,7 +20,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.kotlin.Observables.combineLatest
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
@@ -39,18 +41,21 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                 .throttleFirst(500, TimeUnit.MILLISECONDS)
                 .observeOn(Schedulers.io())
                 .flatMapSingle { (position, model) ->
-                    Log.d("myTest", "여기실행?")
                     Single.zip(
                         viewModel.insertOrDeleteUserModelUseCase.execute(model),
                         Single.just(position)
                     ) { a, b -> a to b }
                 }
-                .delay(50, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ (result, position) ->
-                    Log.d("myTest", "result $result position $position")
                     when (result) {
-                        is CommitResult.Deleted -> adapterController.notifyRemoveItem(position)
+                        is CommitResult.Deleted -> {
+                            if (viewModel.latestTabType.unwrappedValue == MainTabType.LOCAL) {
+                                adapterController.notifyRemoveItem(position)
+                            }else{
+                                adapterController.notifyChangeItem(position)
+                            }
+                        }
                         is CommitResult.Inserted -> adapterController.notifyChangeItem(position)
                         is CommitResult.Failed -> TODO()
                     }
@@ -82,19 +87,17 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
 
 
     private fun observeLocalData() {
-        Flowable
+        Observable
             .combineLatest(
-                viewModel.observeLocalUserListUseCase.execute(),
                 binding
                     .mainTabLayout
                     .selectedObserver(MainViewModel.DEFAULT_TAB.ordinal)
                     .disposeByOnDestory(this)
                     .filter { it == TabLayoutEventType.SELECTED && it.position != null }
-                    .map { MainTabType.values()[it.position!!] }
-                    .toFlowable(BackpressureStrategy.LATEST),
-                binding.mainBtnSearch.clicks().toFlowable(BackpressureStrategy.LATEST)
-            ) { localData, currentTab, _ ->
-                localData to currentTab
+                    .map { MainTabType.values()[it.position!!] },
+                binding.mainBtnSearch.clicks()
+            ) { currentTabType, _ ->
+                currentTabType
             }
             .filter {
                 val text = binding.mainInputEditText.text
@@ -102,36 +105,38 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                 if (!validation) Toast.makeText(this, "검색할 수 없는 문자", Toast.LENGTH_SHORT).show()
                 validation
             }
-            .concatMapEager { (localData, currentTab) ->
-                Flowable.combineLatest(
-                    when (currentTab) {
+            .flatMapSingle { currentTabType ->
+                Single.zip(
+                    when (currentTabType) {
                         MainTabType.API -> {
-                            viewModel.getRemoteUserListUseCase
-                                .execute(binding.mainInputEditText.text!!.toString())
-                                .toFlowable()
-                                .map {
-                                    viewModel.getData(it, localData)
-                                }
+                            Single.zip(
+                                viewModel.getRemoteUserListUseCase
+                                    .execute(binding.mainInputEditText.text!!.toString()),
+                                viewModel.getLocalUserListUseCase.execute()
+                            ) { remoteData, localData ->
+                                viewModel.getData(remoteData, localData, currentTabType)
+                            }
                         }
                         MainTabType.LOCAL -> {
-                            Flowable
-                                .just(viewModel.getData(localData, localData))
+                            viewModel.getLocalUserListUseCase.execute().map {
+                                viewModel.getData(it, it, currentTabType)
+                            }
                         }
                     },
-                    Flowable.just(currentTab)
-                ) { data, currentTab ->
-                    data to currentTab
+                    Single.just(currentTabType)
+                ){ data, currentTabType ->
+                    data to currentTabType
                 }
             }
             .disposeByOnDestory(this)
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ (userDataList, currentTab) ->
-                if (currentTab == viewModel.currentTabType.value) {
-                    adapterController.addData(userDataList)
+            .subscribe({ (data, currentTabType) ->
+                if (currentTabType == viewModel.latestTabType.value) {
+                    adapterController.addData(data)
                 } else {
-                    adapterController.changeData(userDataList)
+                    adapterController.changeData(data)
                 }
-                viewModel.currentTabType.value = currentTab
+                viewModel.latestTabType.value = currentTabType
             }, {
                 it.printStackTrace()
             })

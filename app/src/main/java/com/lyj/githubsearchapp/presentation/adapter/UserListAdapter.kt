@@ -46,6 +46,11 @@ class UserListAdapter(
                 .with(holder.itemView)
                 .load(item.avatarUrl)
                 .into(imgAvatar)
+
+            Glide
+                .with(holder.itemView)
+                .load(if (item.isFavorite) R.drawable.ic_star_normal else R.drawable.ic_star_inverted)
+                .into(btnFavorite)
         }
     }
 
@@ -60,8 +65,15 @@ class UserListAdapter(
         notifyDataSetChanged()
     }
 
-    override fun notifyRemoveItem(position: Int) = notifyItemRemoved(position)
-    override fun notifyChangeItem(position: Int) = notifyItemChanged(position)
+    override fun notifyRemoveItem(position: Int){
+        items.removeAt(position)
+        notifyItemRemoved(position)
+    }
+    override fun notifyChangeItem(position: Int){
+        val item = items[position]
+        item.isFavorite = !item.isFavorite
+        notifyItemChanged(position)
+    }
 
 
     inner class UserListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -93,16 +105,16 @@ interface UserListAdapterController {
 
 sealed interface UserListData : GithubUserModel {
 
-    val isFavorite : Boolean
+    var isFavorite : Boolean
 
     class GithubUserData(
         githubUserModel: GithubUserModel,
-        override val isFavorite : Boolean
+        override var isFavorite : Boolean
     ) : GithubUserModel by githubUserModel, UserListData
 
     class GithubUserDataWithInitialSound(
         githubUserModel: GithubUserModel,
-        override val isFavorite : Boolean,
+        override var isFavorite : Boolean,
         val initialSound: Char
     ) : GithubUserModel by githubUserModel, UserListData
 }
