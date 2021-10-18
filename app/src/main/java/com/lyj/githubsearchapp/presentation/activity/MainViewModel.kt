@@ -9,58 +9,71 @@ import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
 import com.lyj.githubsearchapp.domain.usecase.local.GetLocalUserListUseCase
 import com.lyj.githubsearchapp.domain.usecase.remote.GetRemoteUserListUseCase
-import com.lyj.githubsearchapp.presentation.adapter.UserListData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.reactivex.rxjava3.core.Single
 import javax.inject.Inject
+
+typealias IsFavorite = Boolean
+typealias InitialSound = Char
+typealias GithubModelWithFavorite = Pair<GithubUserModel, IsFavorite>
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    val getRemoteUserListUseCase: GetRemoteUserListUseCase,
-    val insertOrDeleteUserModelUseCase: InsertOrDeleteUserModelUseCase,
-    val getLocalUserListUseCase: GetLocalUserListUseCase
+    private val getRemoteUserListUseCase: GetRemoteUserListUseCase,
+    private val getLocalUserListUseCase: GetLocalUserListUseCase,
+    val insertOrDeleteUserModelUseCase: InsertOrDeleteUserModelUseCase
 ) : ViewModel() {
 
     companion object {
         val DEFAULT_TAB = MainTabType.API
     }
 
-    val latestTabType: MutableLiveData<MainTabType> by lazy {
-        MutableLiveData<MainTabType>(DEFAULT_TAB)
+    var latestTabType: MainTabType = DEFAULT_TAB
+
+    fun requestGithubData(
+        tabType: MainTabType,
+        searchKeyword: String
+    ): Single<Map<InitialSound, List<GithubModelWithFavorite>>> {
+        return when (tabType) {
+            MainTabType.API -> {
+                Single.zip(
+                    getRemoteUserListUseCase.execute(searchKeyword),
+                    getLocalUserListUseCase.execute()
+                ) { remoteData, localData ->
+                    getUserListAdapterData(
+                        remoteData,
+                        localData,
+                        MainTabType.API
+                    )
+                }
+            }
+            MainTabType.LOCAL -> {
+                getLocalUserListUseCase.execute().map {
+                    getUserListAdapterData(it, it, MainTabType.LOCAL)
+                }
+            }
+        }
     }
 
-
-    fun getData(
+    private fun getUserListAdapterData(
         targetData: List<GithubUserModel>,
         localData: List<GithubUserModel>,
         tabType: MainTabType
-    ): List<UserListData> {
-        val a = splitInitializeSoundData(targetData)
-            .groupBy { (initialSound, _) -> initialSound }
-            .entries
-            .sortedBy { it.key }
-            .map { entry ->
-                entry
-                    .value
-                    .sortedBy { list -> list.second.userName }
-                    .mapIndexed { index, (initialSound, model) ->
-                        val isFavorite = tabType.checkFavorite.func(model,localData)
-                        if (index == 0) {
-                            UserListData.GithubUserDataWithInitialSound(model, isFavorite, initialSound)
-                        } else {
-                            UserListData.GithubUserData(model, isFavorite)
-                        }
-                    }
+    ): Map<InitialSound, List<GithubModelWithFavorite>> {
+        return splitInitializeSoundData(targetData)
+            .mapValues { entry ->
+                entry.value.map {
+                    it to tabType.checkFavorite.func(it, localData)
+                }
             }
-            .flatten()
-        return a
     }
 
-    private fun splitInitializeSoundData(list: List<GithubUserModel>): List<Pair<Char, GithubUserModel>> =
+    private fun splitInitializeSoundData(list: List<GithubUserModel>): Map<InitialSound, List<GithubUserModel>> =
         list
             .filter { it.userName != null }
-            .map {
+            .groupBy {
                 val (initialSound, _) = KoreanLangagueUtils.splitInitialSound(it.userName!!)
-                initialSound to it
+                initialSound
             }
 }
 

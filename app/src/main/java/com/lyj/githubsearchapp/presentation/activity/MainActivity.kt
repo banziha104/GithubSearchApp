@@ -2,27 +2,25 @@ package com.lyj.githubsearchapp.presentation.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jakewharton.rxbinding4.view.clicks
 import com.lyj.githubsearchapp.common.extension.android.TabLayoutEventType
 import com.lyj.githubsearchapp.common.extension.android.selectedObserver
-import com.lyj.githubsearchapp.common.extension.android.unwrappedValue
 import com.lyj.githubsearchapp.common.extension.lang.disposeByOnDestory
 import com.lyj.githubsearchapp.common.rx.RxLifecycleController
 import com.lyj.githubsearchapp.common.rx.RxLifecycleObserver
 import com.lyj.githubsearchapp.databinding.ActivityMainBinding
 import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.presentation.adapter.UserListAdapter
-import com.lyj.githubsearchapp.presentation.adapter.UserListAdapterController
+import com.lyj.githubsearchapp.presentation.adapter.UserListAdapterDataChanger
+import com.lyj.githubsearchapp.presentation.adapter.UserListAdapterViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.BackpressureStrategy
-import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.kotlin.Observables.combineLatest
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
@@ -35,37 +33,47 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
-    private val userListAdapter: UserListAdapter by lazy {
-        UserListAdapter(UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
-            itemClickObserver
-                .throttleFirst(500, TimeUnit.MILLISECONDS)
-                .observeOn(Schedulers.io())
-                .flatMapSingle { (position, model) ->
-                    Single.zip(
-                        viewModel.insertOrDeleteUserModelUseCase.execute(model),
-                        Single.just(position)
-                    ) { a, b -> a to b }
-                }
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ (result, position) ->
-                    when (result) {
-                        is CommitResult.Deleted -> {
-                            if (viewModel.latestTabType.unwrappedValue == MainTabType.LOCAL) {
-                                adapterController.notifyRemoveItem(position)
-                            }else{
-                                adapterController.notifyChangeItem(position)
-                            }
-                        }
-                        is CommitResult.Inserted -> adapterController.notifyChangeItem(position)
-                        is CommitResult.Failed -> TODO()
+    private val adapterViewModel: UserListAdapterViewModel by lazy {
+        UserListAdapterViewModel(
+            UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
+                itemClickObserver
+                    .throttleFirst(500, TimeUnit.MILLISECONDS)
+                    .observeOn(Schedulers.io())
+                    .flatMapSingle { (position, model) ->
+                        Single.zip(
+                            viewModel.insertOrDeleteUserModelUseCase.execute(model),
+                            Single.just(position),
+                            Single.just(model)
+                        ) { a, b, c -> Triple(a, b, c) }
                     }
-                }, {
-                    it.printStackTrace()
-                })
-        })
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ (result, position, model) ->
+                        when (result) {
+                            is CommitResult.Deleted -> {
+                                if (viewModel.latestTabType == MainTabType.LOCAL) {
+                                    adapterController.notifyRemoveItem(model, position)
+                                } else {
+                                    adapterController.notifyChangeItem(model, position)
+                                }
+                            }
+                            is CommitResult.Inserted -> adapterController.notifyChangeItem(
+                                model,
+                                position
+                            )
+                            is CommitResult.Failed -> TODO()
+                        }
+                    }, {
+                        it.printStackTrace()
+                    })
+            }
+        )
     }
 
-    private val adapterController: UserListAdapterController = userListAdapter
+    private val userListAdapter: UserListAdapter by lazy {
+        UserListAdapter(adapterViewModel)
+    }
+
+    private val adapterController: UserListAdapterDataChanger = adapterViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,64 +90,74 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     }
 
     private fun observeRxSource() {
-        observeLocalData()
+        observeUiEventWithAffectListData()
     }
 
 
-    private fun observeLocalData() {
+    private fun observeUiEventWithAffectListData() {
         Observable
-            .combineLatest(
+            .merge<MainActivityEventType>(
                 binding
                     .mainTabLayout
-                    .selectedObserver(MainViewModel.DEFAULT_TAB.ordinal)
+                    .selectedObserver()
                     .disposeByOnDestory(this)
                     .filter { it == TabLayoutEventType.SELECTED && it.position != null }
-                    .map { MainTabType.values()[it.position!!] },
-                binding.mainBtnSearch.clicks()
-            ) { currentTabType, _ ->
-                currentTabType
-            }
-            .filter {
-                val text = binding.mainInputEditText.text
-                val validation = text != null && text.isNotBlank()
-                if (!validation) Toast.makeText(this, "검색할 수 없는 문자", Toast.LENGTH_SHORT).show()
-                validation
-            }
-            .flatMapSingle { currentTabType ->
+                    .map { MainTabType.values()[it.position!!] }
+                    .filter { it != viewModel.latestTabType }
+                    .map { MainActivityEventType.TabChanged(it) },
+                binding
+                    .mainBtnSearch
+                    .clicks()
+                    .map { MainActivityEventType.SearchButtonClicked }
+                    .filter {
+                        val text = binding.mainInputEditText.text
+                        val validation = text != null && text.isNotBlank()
+                        if (!validation) Toast.makeText(this, "검색할 수 없는 문자", Toast.LENGTH_SHORT).show()
+                        validation
+                    }
+            )
+            .flatMapSingle { event ->
                 Single.zip(
-                    when (currentTabType) {
-                        MainTabType.API -> {
-                            Single.zip(
-                                viewModel.getRemoteUserListUseCase
-                                    .execute(binding.mainInputEditText.text!!.toString()),
-                                viewModel.getLocalUserListUseCase.execute()
-                            ) { remoteData, localData ->
-                                viewModel.getData(remoteData, localData, currentTabType)
-                            }
+                    when (event) {
+                        is MainActivityEventType.SearchButtonClicked -> {
+                            viewModel.requestGithubData(
+                                viewModel.latestTabType,
+                                binding.mainInputEditText.text!!.toString()
+                            )
                         }
-                        MainTabType.LOCAL -> {
-                            viewModel.getLocalUserListUseCase.execute().map {
-                                viewModel.getData(it, it, currentTabType)
-                            }
+                        is MainActivityEventType.TabChanged -> {
+                            viewModel.requestGithubData(
+                                event.tabType,
+                                binding.mainInputEditText.text!!.toString()
+                            )
                         }
                     },
-                    Single.just(currentTabType)
-                ){ data, currentTabType ->
-                    data to currentTabType
+                    Single.just(event)
+                ) { data, event ->
+                    data to event
                 }
             }
             .disposeByOnDestory(this)
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ (data, currentTabType) ->
-                if (currentTabType == viewModel.latestTabType.value) {
-                    adapterController.addData(data)
-                } else {
-                    adapterController.changeData(data)
+            .doOnNext { binding.mainProgressBar.visibility = View.VISIBLE }
+            .subscribe({ (data, event) ->
+                when (event) {
+                    is MainActivityEventType.SearchButtonClicked -> {
+                        adapterController.changeData(data)
+                    }
+                    is MainActivityEventType.TabChanged -> {
+                        adapterController.changeData(data)
+                        viewModel.latestTabType = event.tabType
+                    }
                 }
-                viewModel.latestTabType.value = currentTabType
+                binding.mainProgressBar.visibility = View.INVISIBLE
             }, {
                 it.printStackTrace()
             })
     }
+}
 
+sealed interface MainActivityEventType {
+    object SearchButtonClicked : MainActivityEventType
+    class TabChanged(val tabType: MainTabType) : MainActivityEventType
 }
