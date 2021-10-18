@@ -9,7 +9,7 @@ import retrofit2.http.Query
 interface GithubUserApi{
 
     companion object {
-        const val DEFAULT_PER_PAGE = 50
+        const val DEFAULT_PER_PAGE = 100
     }
 
     @GET("search/users")

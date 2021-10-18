@@ -12,19 +12,19 @@ import org.reactivestreams.Publisher
 
 
 interface RxLifecycleController : LifecycleOwner {
-    val disposableLifecycleObserver: RxLifecycleObserver
+    val rxLifecycleObserver: RxLifecycleObserver
 
     fun add(disposable: Disposable, lifecycleEvent: Lifecycle.Event) =
-        disposableLifecycleObserver.add(disposable, lifecycleEvent)
+        rxLifecycleObserver.add(disposable, lifecycleEvent)
 
     fun <T> disposeByOnStop(): LifecycleTransformer<T> =
-        disposableLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_STOP)
+        rxLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_STOP)
 
     fun <T> disposeByOnPause(): LifecycleTransformer<T> =
-        disposableLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_PAUSE)
+        rxLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_PAUSE)
 
     fun <T> disposeByOnDestroy(): LifecycleTransformer<T> =
-        disposableLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_DESTROY)
+        rxLifecycleObserver.transformer(disposeBy = Lifecycle.Event.ON_DESTROY)
 }
 
 class RxLifecycleObserver(

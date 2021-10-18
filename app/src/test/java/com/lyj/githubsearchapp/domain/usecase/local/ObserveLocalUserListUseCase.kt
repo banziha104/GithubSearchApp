@@ -23,7 +23,7 @@ class ObserveLocalUserListUseCaseTests : LocalDatabaseTests() {
     var hiltRule = HiltAndroidRule(this)
 
     @Inject
-    lateinit var observeLocalUserListUseCase : ObserveLocalUserListUseCase
+    lateinit var observeLocalUserListUseCase : GetLocalUserListUseCase
 
     @Before
     fun init(){
