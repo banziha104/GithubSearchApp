@@ -13,6 +13,7 @@ import com.lyj.githubsearchapp.common.extension.lang.disposeByOnDestory
 import com.lyj.githubsearchapp.common.rx.RxLifecycleController
 import com.lyj.githubsearchapp.common.rx.RxLifecycleObserver
 import com.lyj.githubsearchapp.databinding.ActivityMainBinding
+import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.presentation.adapter.UserListAdapter
 import com.lyj.githubsearchapp.presentation.adapter.UserListAdapterDataChanger
@@ -34,43 +35,28 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     }
 
     private val adapterViewModel: UserListAdapterViewModel by lazy {
-        UserListAdapterViewModel(
-            UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
-                itemClickObserver
-                    .throttleFirst(500, TimeUnit.MILLISECONDS)
-                    .observeOn(Schedulers.io())
-                    .flatMapSingle { (position, model) ->
-                        Single.zip(
-                            viewModel.insertOrDeleteUserModelUseCase.execute(model),
-                            Single.just(position),
-                            Single.just(model)
-                        ) { a, b, c -> Triple(a, b, c) }
-                    }
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ (result, position, model) ->
-                        when (result) {
-                            is CommitResult.Deleted -> {
-                                if (viewModel.latestTabType == MainTabType.LOCAL) {
-                                    adapterController.notifyRemoveItem(model, position)
-                                } else {
-                                    adapterController.notifyChangeItem(model, position)
-                                }
-                            }
-                            is CommitResult.Inserted -> adapterController.notifyChangeItem(
-                                model,
-                                position
-                            )
-                            is CommitResult.Failed -> TODO()
-                        }
-                    }, {
-                        it.printStackTrace()
-                    })
-            }
-        )
+        UserListAdapterViewModel(getListItemClickObserver())
     }
 
     private val userListAdapter: UserListAdapter by lazy {
         UserListAdapter(adapterViewModel)
+    }
+
+    private val tabLayoutItemClickedObserver: Observable<MainTabType> by lazy {
+        binding
+            .mainTabLayout
+            .selectedObserver()
+            .disposeByOnDestory(this)
+            .filter { it == TabLayoutEventType.SELECTED && it.position != null }
+            .map { MainTabType.values()[it.position!!] }
+            .filter { it != viewModel.latestTabType }
+    }
+
+    private val searchButtonClickObserver: Observable<Unit> by lazy {
+        binding
+            .mainBtnSearch
+            .clicks()
+            .disposeByOnDestory(this)
     }
 
     private val adapterController: UserListAdapterDataChanger = adapterViewModel
@@ -93,28 +79,11 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         observeUiEventWithAffectListData()
     }
 
-
     private fun observeUiEventWithAffectListData() {
         Observable
             .merge<MainActivityEventType>(
-                binding
-                    .mainTabLayout
-                    .selectedObserver()
-                    .disposeByOnDestory(this)
-                    .filter { it == TabLayoutEventType.SELECTED && it.position != null }
-                    .map { MainTabType.values()[it.position!!] }
-                    .filter { it != viewModel.latestTabType }
-                    .map { MainActivityEventType.TabChanged(it) },
-                binding
-                    .mainBtnSearch
-                    .clicks()
-                    .map { MainActivityEventType.SearchButtonClicked }
-                    .filter {
-                        val text = binding.mainInputEditText.text
-                        val validation = text != null && text.isNotBlank()
-                        if (!validation) Toast.makeText(this, "검색할 수 없는 문자", Toast.LENGTH_SHORT).show()
-                        validation
-                    }
+                tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) },
+                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }
             )
             .flatMapSingle { event ->
                 Single.zip(
@@ -122,24 +91,35 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                         is MainActivityEventType.SearchButtonClicked -> {
                             viewModel.requestGithubData(
                                 viewModel.latestTabType,
-                                binding.mainInputEditText.text!!.toString()
+                                binding.mainInputEditText.text?.toString()
                             )
                         }
                         is MainActivityEventType.TabChanged -> {
-                            viewModel.requestGithubData(
-                                event.tabType,
-                                binding.mainInputEditText.text!!.toString()
-                            )
+                            if (event.tabType == MainTabType.API) {
+                                val text = binding.mainInputEditText.text
+                                if (text != null) {
+                                    viewModel.requestGithubData(
+                                        event.tabType,
+                                        text.toString()
+                                    )
+                                } else {
+                                    Single.just(mapOf())
+                                }
+                            } else {
+                                viewModel.requestGithubData(event.tabType)
+                            }
                         }
                     },
                     Single.just(event)
                 ) { data, event ->
                     data to event
                 }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnSubscribe { binding.mainProgressBar.visibility = View.VISIBLE }
+                    .doOnSuccess { binding.mainProgressBar.visibility = View.GONE }
             }
             .disposeByOnDestory(this)
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnNext { binding.mainProgressBar.visibility = View.VISIBLE }
             .subscribe({ (data, event) ->
                 when (event) {
                     is MainActivityEventType.SearchButtonClicked -> {
@@ -155,6 +135,40 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                 it.printStackTrace()
             })
     }
+
+    private fun getListItemClickObserver(): UserListAdapter.OnUserListAdapterItemClickedObserver =
+        UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
+            itemClickObserver
+                .throttleFirst(500, TimeUnit.MILLISECONDS)
+                .observeOn(Schedulers.io())
+                .flatMapSingle { (position, model) ->
+                    Single.zip(
+                        viewModel.insertOrDeleteUserModelUseCase.execute(model),
+                        Single.just(position),
+                        Single.just(model)
+                    ) { a, b, c -> Triple(a, b, c) }
+                }
+                .disposeByOnDestory(this)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({ (result, position, model) ->
+                    when (result) {
+                        is CommitResult.Deleted -> {
+                            if (viewModel.latestTabType == MainTabType.LOCAL) {
+                                adapterController.notifyRemoveItem(model, position)
+                            } else {
+                                adapterController.notifyChangeItem(model, position)
+                            }
+                        }
+                        is CommitResult.Inserted -> adapterController.notifyChangeItem(
+                            model,
+                            position
+                        )
+                        is CommitResult.Failed -> TODO()
+                    }
+                }, {
+                    it.printStackTrace()
+                })
+        }
 }
 
 sealed interface MainActivityEventType {
