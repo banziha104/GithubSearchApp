@@ -8,8 +8,11 @@ import io.reactivex.rxjava3.core.Single
 class GithubRemoteApiRepositoryImpl(
     private val githubUserApi: GithubUserApi
 ) : GithubRemoteApiRepository {
-    override fun requestGetUserList(searchKeyword: String): Single<List<GithubUserModel>> =
-        githubUserApi.requestSearchUser(searchKeyword).map {
+    override fun requestGetUserList(
+        searchKeyword: String,
+        page: Int
+    ): Single<List<GithubUserModel>> =
+        githubUserApi.requestSearchUser(searchKeyword, page = page).map {
             it.items ?: listOf()
         }
 }

@@ -16,8 +16,8 @@ import javax.inject.Singleton
 class GetRemoteUserListUseCase @Inject constructor(
     private val githubRemoteApiRepository: GithubRemoteApiRepository
 ){
-    fun execute(userName: String) : Single<List<GithubUserModel>> =
+    fun execute(userName: String, page : Int = 1) : Single<List<GithubUserModel>> =
         githubRemoteApiRepository
-            .requestGetUserList(userName)
+            .requestGetUserList(userName,page)
             .subscribeOn(Schedulers.io())
 }
