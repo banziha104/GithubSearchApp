@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.lyj.githubsearchapp.R
 import com.lyj.githubsearchapp.common.utils.KoreanLangagueUtils
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
+import com.lyj.githubsearchapp.domain.usecase.local.FindLocalDataByUserNameUseCase
 import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
 import com.lyj.githubsearchapp.domain.usecase.local.GetLocalUserListUseCase
 import com.lyj.githubsearchapp.domain.usecase.remote.GetRemoteUserListUseCase
@@ -21,6 +22,7 @@ typealias GithubModelWithFavorite = Pair<GithubUserModel, IsFavorite>
 class MainViewModel @Inject constructor(
     private val getRemoteUserListUseCase: GetRemoteUserListUseCase,
     private val getLocalUserListUseCase: GetLocalUserListUseCase,
+    private val findLocalDataByUserNameUseCase: FindLocalDataByUserNameUseCase,
     val insertOrDeleteUserModelUseCase: InsertOrDeleteUserModelUseCase
 ) : ViewModel() {
 
@@ -32,10 +34,15 @@ class MainViewModel @Inject constructor(
 
     fun requestGithubData(
         tabType: MainTabType,
-        searchKeyword: String
+        searchKeyword: String? = null
     ): Single<Map<InitialSound, List<GithubModelWithFavorite>>> {
+
         return when (tabType) {
             MainTabType.API -> {
+                if (searchKeyword == null || searchKeyword.isBlank()) {
+                    return Single.just(mapOf())
+                }
+
                 Single.zip(
                     getRemoteUserListUseCase.execute(searchKeyword),
                     getLocalUserListUseCase.execute()
@@ -48,7 +55,12 @@ class MainViewModel @Inject constructor(
                 }
             }
             MainTabType.LOCAL -> {
-                getLocalUserListUseCase.execute().map {
+                if (searchKeyword != null && searchKeyword.isNotBlank()) {
+                    findLocalDataByUserNameUseCase
+                        .execute(searchKeyword)
+                } else {
+                    getLocalUserListUseCase.execute()
+                }.map {
                     getUserListAdapterData(it, it, MainTabType.LOCAL)
                 }
             }

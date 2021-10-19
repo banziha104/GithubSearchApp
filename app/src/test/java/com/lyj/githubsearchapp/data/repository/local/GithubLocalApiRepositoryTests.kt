@@ -78,7 +78,6 @@ class GithubLocalApiRepositoryTests : LocalDatabaseTests() {
                     (datas as? List<GithubFavoriteUserEntity>)?.firstOrNull()
 
                 val data2 = datas as? List<GithubFavoriteUserEntity>
-                println("data : $data $data2 ${commitResult::class.java.simpleName}")
                 commitResult is CommitResult && commitResult == CommitResult.Inserted &&
                         data != null && data.login == model.userName
             }

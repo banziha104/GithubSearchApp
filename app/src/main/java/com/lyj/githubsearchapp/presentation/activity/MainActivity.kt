@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jakewharton.rxbinding4.view.clicks
 import com.lyj.githubsearchapp.common.extension.android.TabLayoutEventType
+import com.lyj.githubsearchapp.common.extension.android.searchButtonActionObserver
 import com.lyj.githubsearchapp.common.extension.android.selectedObserver
 import com.lyj.githubsearchapp.common.extension.lang.disposeByOnDestory
 import com.lyj.githubsearchapp.common.rx.RxLifecycleController
@@ -59,6 +60,12 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
             .disposeByOnDestory(this)
     }
 
+    private val softKeyboardInputListener : Observable<Unit> by lazy {
+        binding
+            .mainInputEditText
+            .searchButtonActionObserver()
+            .disposeByOnDestory(this)
+    }
     private val adapterController: UserListAdapterDataChanger = adapterViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +90,8 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         Observable
             .merge<MainActivityEventType>(
                 tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) },
-                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }
+                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked },
+                softKeyboardInputListener.map { MainActivityEventType.SearchButtonClicked }
             )
             .flatMapSingle { event ->
                 Single.zip(
@@ -95,8 +103,8 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                             )
                         }
                         is MainActivityEventType.TabChanged -> {
+                            val text = binding.mainInputEditText.text
                             if (event.tabType == MainTabType.API) {
-                                val text = binding.mainInputEditText.text
                                 if (text != null) {
                                     viewModel.requestGithubData(
                                         event.tabType,
@@ -106,7 +114,7 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                                     Single.just(mapOf())
                                 }
                             } else {
-                                viewModel.requestGithubData(event.tabType)
+                                viewModel.requestGithubData(event.tabType,text?.toString())
                             }
                         }
                     },
