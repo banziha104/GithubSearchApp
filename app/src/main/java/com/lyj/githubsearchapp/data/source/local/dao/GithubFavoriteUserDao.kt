@@ -17,8 +17,8 @@ interface GithubFavoriteUserDao {
     @Query("SELECT * FROM github_favorite_user ORDER BY login ASC")
     fun findAllOnce(): Single<List<GithubFavoriteUserEntity>>
 
-    @Query("SELECT * FROM github_favorite_user ORDER BY login ASC")
-    fun observeFavoriteUserTable(): Flowable<List<GithubFavoriteUserEntity>>
+    @Query("SELECT * FROM github_favorite_user WHERE login LIKE '%' || :userName || '%'")
+    fun findByUserName(userName: String) : Single<List<GithubFavoriteUserEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(entity: GithubFavoriteUserEntity): Completable
