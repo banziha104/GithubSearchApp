@@ -1,16 +1,16 @@
 package com.lyj.githubsearchapp.presentation.activity
 
 import androidx.annotation.StringRes
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.lyj.githubsearchapp.R
 import com.lyj.githubsearchapp.common.utils.KoreanLanguageUtils
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.usecase.local.FindLocalDataByUserNameUseCase
-import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
 import com.lyj.githubsearchapp.domain.usecase.local.GetLocalUserListUseCase
+import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
 import com.lyj.githubsearchapp.domain.usecase.remote.GetRemoteUserListUseCase
+import com.lyj.githubsearchapp.presentation.activity.MainTabType.API
+import com.lyj.githubsearchapp.presentation.activity.MainTabType.LOCAL
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.core.Single
 import javax.inject.Inject

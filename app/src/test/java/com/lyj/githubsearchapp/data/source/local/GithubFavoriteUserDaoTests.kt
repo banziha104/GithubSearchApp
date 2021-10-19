@@ -1,8 +1,5 @@
 package com.lyj.githubsearchapp.data.source.local
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
 import com.lyj.githubsearchapp.TestConfig
 import com.lyj.githubsearchapp.base.LocalDatabaseTests
 import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
@@ -19,7 +16,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 import javax.inject.Inject
 

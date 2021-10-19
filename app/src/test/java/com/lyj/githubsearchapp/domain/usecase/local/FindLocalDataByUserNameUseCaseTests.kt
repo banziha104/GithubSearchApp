@@ -1,7 +1,6 @@
 package com.lyj.githubsearchapp.domain.usecase.local
 
 import com.lyj.githubsearchapp.TestConfig
-import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository

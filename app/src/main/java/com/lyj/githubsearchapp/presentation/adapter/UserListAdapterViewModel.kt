@@ -1,7 +1,5 @@
 package com.lyj.githubsearchapp.presentation.adapter
 
-import android.util.Log
-import androidx.recyclerview.widget.DiffUtil
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.presentation.activity.GithubModelWithFavorite
 import com.lyj.githubsearchapp.presentation.activity.InitialSound

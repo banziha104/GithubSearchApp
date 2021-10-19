@@ -1,7 +1,6 @@
 package com.lyj.githubsearchapp.common.extension.android
 
 import androidx.lifecycle.LiveData
-import java.lang.RuntimeException
 
 /**
  * LiveData는 초기화가 안된 경우를 제외하고는 value가 null이 아님으로 강제 unwrapping

@@ -1,8 +1,6 @@
 package com.lyj.githubsearchapp.data.repository.remote
 
 import com.lyj.githubsearchapp.TestConfig
-import com.lyj.githubsearchapp.data.source.remote.service.GithubUserApi
-import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository
 import com.lyj.githubsearchapp.domain.repository.GithubRemoteApiRepository
 import com.lyj.githubsearchapp.extension.testWithAwait
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -14,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 

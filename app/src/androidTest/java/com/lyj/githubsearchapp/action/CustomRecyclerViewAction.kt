@@ -1,6 +1,5 @@
 package com.lyj.githubsearchapp.action
 
-import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.UiController

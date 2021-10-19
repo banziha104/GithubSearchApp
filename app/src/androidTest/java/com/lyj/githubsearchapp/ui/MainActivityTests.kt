@@ -1,15 +1,12 @@
 package com.lyj.githubsearchapp.ui
 
 import android.content.Context
-import android.util.Log
-import android.view.View
-import android.widget.ImageButton
-import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.*
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.IdlingRegistry
+import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
@@ -17,20 +14,8 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import com.google.android.material.tabs.TabLayout
-import com.lyj.githubsearchapp.R
-import com.lyj.githubsearchapp.presentation.activity.MainActivity
-import com.lyj.githubsearchapp.presentation.adapter.UserListAdapter
-import com.lyj.githubsearchapp.rules.OkHttpIdlingRule
-import okhttp3.OkHttpClient
-import org.hamcrest.Matcher
-import org.hamcrest.core.AllOf.allOf
-import org.junit.runner.RunWith
-import org.junit.runners.MethodSorters
-import javax.inject.Inject
-import androidx.test.espresso.matcher.BoundedMatcher
-import androidx.test.platform.app.InstrumentationRegistry
 import com.jakewharton.espresso.OkHttp3IdlingResource
+import com.lyj.githubsearchapp.R
 import com.lyj.githubsearchapp.action.CustomRecyclerViewAction
 import com.lyj.githubsearchapp.action.CustomTableLayoutAction
 import com.lyj.githubsearchapp.action.CustomViewAction
@@ -40,11 +25,21 @@ import com.lyj.githubsearchapp.data.source.local.dao.GithubFavoriteUserDao
 import com.lyj.githubsearchapp.domain.repository.GithubLocalApiRepository
 import com.lyj.githubsearchapp.matcher.CustomRecyclerViewMatcher
 import com.lyj.githubsearchapp.module.DatabaseModule
+import com.lyj.githubsearchapp.presentation.activity.MainActivity
 import com.lyj.githubsearchapp.presentation.activity.MainTabType
-import dagger.hilt.android.testing.*
-import org.hamcrest.Description
+import com.lyj.githubsearchapp.presentation.adapter.UserListAdapter
+import dagger.hilt.android.testing.BindValue
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
+import okhttp3.OkHttpClient
 import org.hamcrest.core.IsNot.not
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import javax.inject.Inject
 import javax.inject.Singleton
 
 

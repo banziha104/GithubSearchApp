@@ -7,7 +7,6 @@ import androidx.room.Query
 import com.lyj.githubsearchapp.data.source.local.entity.GithubFavoriteUserEntity
 import com.lyj.githubsearchapp.domain.repository.CommitResult
 import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 
 /**
