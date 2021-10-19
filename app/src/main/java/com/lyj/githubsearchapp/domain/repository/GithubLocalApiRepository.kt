@@ -1,7 +1,6 @@
 package com.lyj.githubsearchapp.domain.repository
 
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
-import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 
 // Local Database 와 연동되는 Repository
@@ -9,11 +8,12 @@ interface GithubLocalApiRepository : GithubUserFavoriteTableContract
 
 /***
  * Local Database 에서 DAO가 구현해야하는 규약
- * @property observeGithubUserTable 저장된 데이터베이스를 읽어옮
+ * @property findAll 저장된 데이터베이스를 읽어옮
  * @property insertOrDeleteIfExist 전달 받은 파라미터와 저장된 값을 비교해서, 이미 저장되어 있는 경우 삭제, 없는 경우 생성
  */
 interface GithubUserFavoriteTableContract{
-    fun observeGithubUserTable() : Single<List<GithubUserModel>>
+    fun findAll() : Single<List<GithubUserModel>>
+    fun findByUserName(userName : String) : Single<List<GithubUserModel>>
     fun insertOrDeleteIfExist(model: GithubUserModel) : Single<CommitResult>
 }
 
