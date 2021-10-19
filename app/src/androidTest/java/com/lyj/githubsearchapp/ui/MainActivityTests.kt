@@ -10,8 +10,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.*
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -194,6 +193,50 @@ class MainActivityTests {
                         )
                 )
             )
+
+
+        // Refresh 테스트
+        recyclerViewInteraction
+            .perform(swipeDown())
+
+
+//        // 무한 스크롤 테스트
+//        // 데이터 불러오기 테스트
+//
+        var firstLoadItemCount = 0
+
+        recyclerViewInteraction
+            .check { view, noViewFoundException ->
+
+                assert(noViewFoundException == null)
+
+                if (view is RecyclerView) {
+                    firstLoadItemCount = view.adapter?.itemCount ?: 0
+
+                    assert(firstLoadItemCount != 0)
+                } else {
+                    assert(false)
+                }
+            }
+//        // 리스트를 최하단으로 이동
+        recyclerViewInteraction
+            .perform(CustomRecyclerViewAction.scrollToEnd())
+
+
+        await(2000)
+
+        recyclerViewInteraction
+            .check { view, noViewFoundException ->
+
+                assert(noViewFoundException == null)
+
+                if (view is RecyclerView) {
+                    val itemCount = view.adapter?.itemCount ?: 0
+                    assert(firstLoadItemCount != 0 && itemCount > firstLoadItemCount)
+                } else {
+                    assert(false)
+                }
+            }
     }
 
 
