@@ -49,10 +49,9 @@ import javax.inject.Singleton
 
 
 @RunWith(AndroidJUnit4::class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @LargeTest
 @HiltAndroidTest
-@UninstallModules(DatabaseModule::class)
+@UninstallModules(DatabaseModule::class) // Inmemory Database 사용을 위해 제거
 class MainActivityTests {
 
     @get:Rule(order = 0)
@@ -104,14 +103,29 @@ class MainActivityTests {
         onView(isRoot()).perform(CustomViewAction.waitFor(long))
     }
 
+    /**
+     * 액티비티 테스트 시나리오
+     *
+     * 1. EditText에 검색어 입력 테스트
+     * 2. 검색버튼 클릭 및 프로그래스바 테스트 (프로그래스바 테스트는 API 완료 시점이 불분명해 우선 제외)
+     * 3. 네트워크 완료 후 데이터 갯수 테스트
+     * 4. Local 탭으로 이동 후 비어있는지 확인
+     * 5. API 탭으로 북귀, 첫 번째 아이템 즐겨찾기 클릭
+     * 6. 첫 번째 아이템 클릭 후 이미지 적용 확인
+     * 7. Local 탭으로 가서 첫 번째 아이템 반영 및 데이터 갯수 확인
+     * 8. Local 탭에서 즐겨찾기 해제 후 지워지는지확인
+     * 9. API 탭으로 돌아와 첫 번째 즐겨찾기가 지워졌는지 확인
+     * 10. Swipe 후 Refresh 되는지 확인
+     * 11. 최하단으로 이동해서 추가로 데이터를 받아오는지 확인 (Infinite Scroll)
+     */
     @Test
-    fun `01_검색_입력_테스트`() {
-        // EditText 테스트
+    fun `메인액티비티_테스트`() {
+        // 1. EditText에 검색어 입력 테스트
         onView(withId(R.id.mainInputEditText))
             .perform(replaceText(searchText))
             .check(matches(withText(searchText)))
 
-        // 검색 버튼 클릭 및 프로그레스바 테스트
+        // 2. 검색버튼 클릭 및 프로그래스바 테스트 (프로그래스바 테스트는 API 완료 시점이 불분명해 우선 제외)
         onView(withId(R.id.mainBtnSearch))
             .perform(click())
 
@@ -120,18 +134,18 @@ class MainActivityTests {
 
         await(2000)
 
-        // 데이터 로드 후 아이템 갯수 테스트
+        //  3. 네트워크 완료 후 데이터 갯수 테스트
         recyclerViewInteraction
             .check(matches(not(CustomRecyclerViewMatcher.withDataEmpty())))
 
 
-        // 로컬 데이터베이스 이동 및 아이템 갯수 테스트
+        // 4. Local 탭으로 이동 후 비어있는지 확인
         clickTab(MainTabType.LOCAL)
 
         recyclerViewInteraction
             .check(matches(CustomRecyclerViewMatcher.withDataEmpty()))
 
-        // API 탭으로 돌아와 첫번쨰 아이템 클릭
+        // 5. API 탭으로 북귀, 첫 번째 아이템 즐겨찾기 클릭
         clickTab(MainTabType.API)
 
         recyclerViewInteraction
@@ -145,7 +159,7 @@ class MainActivityTests {
 
         await(1000)
 
-        // 첫번째 아이템 클릭후 이미지 적용 확인
+        // 6. 첫 번째 아이템 클릭 후 이미지 적용 확인
         recyclerViewInteraction
             .check(
                 matches(
@@ -158,11 +172,14 @@ class MainActivityTests {
                 )
             )
 
+        // 7. Local 탭으로 가서 첫 번째 아이템 반영 및 데이터 갯수 확인
+
         clickTab(MainTabType.LOCAL)
 
-        // Local 탭에서 아이템 갯수 확인 및 첫번째 아이템 클릭
         recyclerViewInteraction
             .check(matches(not(CustomRecyclerViewMatcher.withDataEmpty())))
+
+        //  8. Local 탭에서 즐겨찾기 해제 후 지워지는지확인
 
         recyclerViewInteraction
             .perform(
@@ -178,9 +195,9 @@ class MainActivityTests {
         recyclerViewInteraction
             .check(matches(CustomRecyclerViewMatcher.withDataEmpty()))
 
+        // 9. API 탭으로 돌아와 첫 번째 즐겨찾기가 지워졌는지 확인
         clickTab(MainTabType.API)
 
-        // API 탭에서 첫번쨰 아이템 이미지 확인 및 Data 확인
         recyclerViewInteraction
             .check(matches(not(CustomRecyclerViewMatcher.withDataEmpty())))
             .check(
@@ -195,14 +212,18 @@ class MainActivityTests {
             )
 
 
-        // Refresh 테스트
+        // 10. Swipe 후 Refresh 되는지 확인
+
         recyclerViewInteraction
             .perform(swipeDown())
 
 
-//        // 무한 스크롤 테스트
-//        // 데이터 불러오기 테스트
-//
+//        onView(withId(R.id.mainProgressBar))
+//            .check(matches(isDisplayed()))
+
+
+        //  11. 최하단으로 이동해서 추가로 데이터를 받아오는지 확인 (Infinite Scroll)
+
         var firstLoadItemCount = 0
 
         recyclerViewInteraction
@@ -218,7 +239,7 @@ class MainActivityTests {
                     assert(false)
                 }
             }
-//        // 리스트를 최하단으로 이동
+
         recyclerViewInteraction
             .perform(CustomRecyclerViewAction.scrollToEnd())
 
