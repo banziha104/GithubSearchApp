@@ -3,13 +3,15 @@ package com.lyj.githubsearchapp.domain.repository
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import io.reactivex.rxjava3.core.Single
 
-// Local Database 와 연동되는 Repository
+/**
+ * Local Database 와 연동을 추상화한 인터페이스
+ *
+ * DAO의 기능을 명시한 [GithubUserFavoriteTableContract] 를 상속
+ */
 interface GithubLocalApiRepository : GithubUserFavoriteTableContract
 
-/***
+/**
  * Local Database 에서 DAO가 구현해야하는 규약
- * @property findAll 저장된 데이터베이스를 읽어옮
- * @property insertOrDeleteIfExist 전달 받은 파라미터와 저장된 값을 비교해서, 이미 저장되어 있는 경우 삭제, 없는 경우 생성
  */
 interface GithubUserFavoriteTableContract{
     fun findAll() : Single<List<GithubUserModel>>

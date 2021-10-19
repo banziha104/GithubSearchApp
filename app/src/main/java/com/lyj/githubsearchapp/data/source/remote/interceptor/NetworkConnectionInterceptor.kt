@@ -24,6 +24,8 @@ class NetworkConnectionInterceptor(
 ) : Interceptor {
 
 
+    // # 마크다운 표기 테스트
+
     override fun intercept(chain: Interceptor.Chain): Response {
 
         onCheckNetworkConnection.callBack(isConnected)
@@ -31,6 +33,9 @@ class NetworkConnectionInterceptor(
         return chain.proceed( chain.request().newBuilder().build())
     }
 
+    /**
+     * 호출시 현재 네트워크가 가용한지를 반환하는 프로퍼티
+     */
     private val isConnected: Boolean
         get() {
             val connectivityManager =

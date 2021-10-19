@@ -43,16 +43,25 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         UserListAdapter(adapterViewModel)
     }
 
+    /**
+     * TabLayout 에서 아이템이 클릭을 관찰하는 옵저버
+     * SELECTED 상태, 이전에 동일하지 않은 탭을 클릭하는 경우만 발행
+     *
+     * @see selectedObserver
+     */
     private val tabLayoutItemClickedObserver: Observable<MainTabType> by lazy {
         binding
             .mainTabLayout
             .selectedObserver()
             .disposeByOnDestory(this)
             .filter { it == TabLayoutEventType.SELECTED && it.position != null }
-            .map { MainTabType.values()[it.position!!] }
+            .map { MainTabType.values()[it.position!!] } // position 이 nullable 인 것은 위의 filter에서 확인하여 강제 언래핑
             .filter { it != viewModel.latestTabType }
     }
 
+    /**
+     * 검색 버튼 클릭 옵저버
+     */
     private val searchButtonClickObserver: Observable<Unit> by lazy {
         binding
             .mainBtnSearch
@@ -60,12 +69,23 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
             .disposeByOnDestory(this)
     }
 
+    /**
+     * Soft 키보드에서 Action 버튼 클릭 옵저버
+     *
+     * @see [searchButtonActionObserver]
+     */
     private val softKeyboardInputListener : Observable<Unit> by lazy {
         binding
             .mainInputEditText
             .searchButtonActionObserver()
             .disposeByOnDestory(this)
     }
+
+    /**
+     * UserListAdapter 조작하는 추상 클래스
+     *
+     * @see [UserListAdapterDataChanger]
+     */
     private val adapterController: UserListAdapterDataChanger = adapterViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,12 +106,19 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         observeUiEventWithAffectListData()
     }
 
+    /**
+     * 데이터에 영향을 주는 UI 클래스를 관찰하는 옵저버들을 구독하는 메소드
+     * merge를 통해 명시된 옵저버 중 하나라도 발행하면 데이터 변경
+     *
+     * @see [MainActivityEventType] sealed class로 이벤트 타입 정의
+     * @see [MainViewModel.requestGithubData] 데이터 발행 메소드
+     */
     private fun observeUiEventWithAffectListData() {
         Observable
             .merge<MainActivityEventType>(
-                tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) },
-                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked },
-                softKeyboardInputListener.map { MainActivityEventType.SearchButtonClicked }
+                tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) }, // tabLayout click
+                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }, // mainSearchButton click
+                softKeyboardInputListener.map { MainActivityEventType.SearchButtonClicked } // action button click
             )
             .flatMapSingle { event ->
                 Single.zip(
@@ -123,8 +150,8 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                     data to event
                 }
                     .observeOn(AndroidSchedulers.mainThread())
-                    .doOnSubscribe { binding.mainProgressBar.visibility = View.VISIBLE }
-                    .doOnSuccess { binding.mainProgressBar.visibility = View.GONE }
+                    .doOnSubscribe { binding.mainProgressBar.visibility = View.VISIBLE } // 데이터 요청 시 ProgressBar VISIBLE
+                    .doOnSuccess { binding.mainProgressBar.visibility = View.GONE }  // 데이터 요청 완료 시 ProgressBar GONE
             }
             .disposeByOnDestory(this)
             .observeOn(AndroidSchedulers.mainThread())
@@ -144,6 +171,11 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
             })
     }
 
+    /**
+     * UserListAdapter 에서 아이템 클릭을 관찰하는 옵저버 구독
+     *
+     * @return [UserListAdapter.OnUserListAdapterItemClickedObserver] 어뎁터에서 사용할 반환객체
+     */
     private fun getListItemClickObserver(): UserListAdapter.OnUserListAdapterItemClickedObserver =
         UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
             itemClickObserver
@@ -179,6 +211,9 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         }
 }
 
+/**
+ * Main Event 에서 발행되는 이벤트 모음
+ */
 sealed interface MainActivityEventType {
     object SearchButtonClicked : MainActivityEventType
     class TabChanged(val tabType: MainTabType) : MainActivityEventType

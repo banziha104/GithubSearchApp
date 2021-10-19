@@ -1,7 +1,7 @@
 package com.lyj.githubsearchapp.utils
 
 import com.lyj.githubsearchapp.common.utils.InitialSoundNotCorrectedException
-import com.lyj.githubsearchapp.common.utils.KoreanLangagueUtils
+import com.lyj.githubsearchapp.common.utils.KoreanLanguageUtils
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -28,7 +28,7 @@ class KoreanUtilsTests{
         correctTextList
             .forEach { (char, str)->
                 try {
-                    val (i, s) = KoreanLangagueUtils.splitInitialSound(str)
+                    val (i, s) = KoreanLanguageUtils.splitInitialSound(str)
                     println("$i $s")
                     assert(i == char)
                 }catch (e : InitialSoundNotCorrectedException){
@@ -39,7 +39,7 @@ class KoreanUtilsTests{
     @Test
     fun `초성_분해_테스트_틀린_예`(){
         try {
-            KoreanLangagueUtils.splitInitialSound(incrrectText)
+            KoreanLanguageUtils.splitInitialSound(incrrectText)
             assert(false)
         }catch (e : InitialSoundNotCorrectedException){
             assert(true)

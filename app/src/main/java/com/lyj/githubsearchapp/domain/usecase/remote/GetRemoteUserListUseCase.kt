@@ -7,6 +7,11 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * 원격 Github API에서 유저를 검색하는 UseCase
+ *
+ * @param githubRemoteApiRepository
+ */
 @Singleton
 class GetRemoteUserListUseCase @Inject constructor(
     private val githubRemoteApiRepository: GithubRemoteApiRepository

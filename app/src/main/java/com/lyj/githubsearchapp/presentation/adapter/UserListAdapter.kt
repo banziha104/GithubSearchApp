@@ -19,12 +19,21 @@ import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
+/**
+ * MainActivity 의 mainRecUser 리사이클러뷰에 적용되는 View
+ *
+ * @param viewModel Adapter에 적용될 Model을 가공하는 클래스
+ */
 class UserListAdapter(
     private val viewModel: UserListAdapterViewModel
 ) : RecyclerView.Adapter<UserListAdapter.UserListViewHolder>() {
 
     private var items: List<UserListDataModel> = listOf()
 
+    /**
+     * ViewModel 의 데이터 변경을 구독, [UserListDataDiffUtils] 를 통해
+     * 이전 데이터셋과 갱신된 데이터셋 간의  차이를 찾고 이를 반영
+     */
     init {
         viewModel.dataEventDriver
             .observeOn(Schedulers.computation())
@@ -69,7 +78,8 @@ class UserListAdapter(
                 .with(holder.itemView)
                 .load(if (item.isFavorite) R.drawable.ic_star_normal else R.drawable.ic_star_inverted)
                 .into(btnFavorite.apply {
-                    tag = if (item.isFavorite) R.drawable.ic_star_normal else R.drawable.ic_star_inverted // 테스트용 태그
+                    tag =
+                        if (item.isFavorite) R.drawable.ic_star_normal else R.drawable.ic_star_inverted // 테스트용 태그
                 })
         }
     }
@@ -90,11 +100,21 @@ class UserListAdapter(
         }
     }
 
+    /***
+     * UserList 에서 아이템 클릭 이벤트를 전달하는 value class
+     */
     @JvmInline
     value class OnUserListAdapterItemClickedObserver(val func: (Observable<Pair<Int, UserListDataModel>>) -> Unit)
 }
 
 
+/**
+ * UserList 에서 이전 데이터와 새 데이터 간의 차이를 찾기 위해 사용하는 DiffUtil
+ *
+ * @param oldItems 기존 아이템
+ * @param newItems 새 아이템
+ * @see DiffUtil.Callback
+ */
 class UserListDataDiffUtils(
     private val oldItems: List<GithubUserModel>,
     private val newItems: List<GithubUserModel>
