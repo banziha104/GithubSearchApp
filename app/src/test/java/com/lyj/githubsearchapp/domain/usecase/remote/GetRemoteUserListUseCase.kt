@@ -32,7 +32,7 @@ class GetRemoteUserListUseCaseTests {
     @Test
     fun `실행테스트`(){
         getRemoteUserListUseCase
-            .execute(TestConfig.SEARCH_KEYWORD)
+            .execute(TestConfig.SEARCH_KEYWORD,page = 1)
             .testWithAwait()
             .assertNoErrors()
             .assertValue {

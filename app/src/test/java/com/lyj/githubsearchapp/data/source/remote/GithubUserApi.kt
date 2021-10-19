@@ -1,6 +1,7 @@
 package com.lyj.githubsearchapp.data.source.remote
 
 import com.lyj.githubsearchapp.TestConfig
+import com.lyj.githubsearchapp.data.source.remote.service.GithubUserApi
 import com.lyj.githubsearchapp.domain.repository.GithubRemoteApiRepository
 import com.lyj.githubsearchapp.extension.testWithAwait
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -25,7 +26,7 @@ class GithubUserApiTests {
 
 
     @Inject
-    lateinit var repository: GithubRemoteApiRepository
+    lateinit var api: GithubUserApi
 
     @Before
     fun init() {
@@ -34,13 +35,13 @@ class GithubUserApiTests {
 
     @Test
     fun `데이터_가져_오기_테스트`() {
-        repository
-            .requestGetUserList(TestConfig.SEARCH_KEYWORD)
+        api
+            .requestSearchUser(TestConfig.SEARCH_KEYWORD, page = 1)
             .testWithAwait()
             .assertNoErrors()
             .assertComplete()
             .assertValue {
-                it.isNotEmpty()
+                it.totalCount != null && it.totalCount!! > 0 && it.items != null
             }
     }
 }
