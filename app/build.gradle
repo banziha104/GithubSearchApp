@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'dagger.hilt.android.plugin'
     id 'kotlin-kapt'
+    id 'org.jetbrains.dokka'
 }
 
 android {
@@ -34,6 +35,12 @@ android {
 
     buildFeatures {
         viewBinding true
+    }
+
+    android {
+        lintOptions {
+            abortOnError false
+        }
     }
 
     hilt {
@@ -126,4 +133,28 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressVersion"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:$espressVersion"
     androidTestImplementation "androidx.test.espresso:espresso-idling-resource:$espressVersion"
+}
+
+tasks.dokkaHtml.configure {
+    outputDirectory.set(file("../docs/html"))
+}
+
+tasks.dokkaJavadoc.configure {
+    outputDirectory.set(file("../docs/javadoc"))
+}
+
+tasks.dokkaGfm.configure {
+    outputDirectory.set(file("../docs/gfm"))
+}
+
+tasks.withType(dokkaHtml.getClass()).configureEach {
+    dokkaSourceSets {
+        configureEach {
+            includeNonPublic.set(true)
+            skipEmptyPackages.set(true)
+            pluginsMapConfiguration.set(
+                    ["org.jetbrains.dokka.base.DokkaBase": """{ "separateInheritedMembers": true}"""]
+            )
+        }
+    }
 }

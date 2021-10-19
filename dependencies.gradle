@@ -10,7 +10,7 @@ ext {
     // Language
     kotlinVersion = "1.5.21"
     kotlinXVersion = '0.9.1'
-
+    dokkaVersion = "1.5.30"
     // KTX
     coroutineVersion = '1.5.1'
     ktxCoreVersion = '1.6.0'
