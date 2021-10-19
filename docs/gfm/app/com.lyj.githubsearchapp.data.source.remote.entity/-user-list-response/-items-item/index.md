@@ -1,0 +1,31 @@
+//[app](../../../../index.md)/[com.lyj.githubsearchapp.data.source.remote.entity](../../index.md)/[UserListResponse](../index.md)/[ItemsItem](index.md)
+
+# ItemsItem
+
+[androidJvm]\
+data class [ItemsItem](index.md)(gistsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, reposUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, followingUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, starredUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, login: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, followersUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, type: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, url: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, subscriptionsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, score: [Double](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.html)?, receivedEventsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, avatarUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, eventsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, htmlUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, siteAdmin: [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)?, id: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)?, gravatarId: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, nodeId: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, organizationsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?) : [GithubUserModel](../../../com.lyj.githubsearchapp.domain.model/-github-user-model/index.md)
+
+## Properties
+
+| Name | Summary |
+|---|---|
+| [avatarUrl](avatar-url.md) | [androidJvm]<br>@SerializedName(value = "avatar_url")<br>open override val [avatarUrl](avatar-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [eventsUrl](events-url.md) | [androidJvm]<br>@SerializedName(value = "events_url")<br>val [eventsUrl](events-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [followersUrl](followers-url.md) | [androidJvm]<br>@SerializedName(value = "followers_url")<br>val [followersUrl](followers-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [followingUrl](following-url.md) | [androidJvm]<br>@SerializedName(value = "following_url")<br>val [followingUrl](following-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [gistsUrl](gists-url.md) | [androidJvm]<br>@SerializedName(value = "gists_url")<br>val [gistsUrl](gists-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [gravatarId](gravatar-id.md) | [androidJvm]<br>@SerializedName(value = "gravatar_id")<br>val [gravatarId](gravatar-id.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [htmlUrl](html-url.md) | [androidJvm]<br>@SerializedName(value = "html_url")<br>val [htmlUrl](html-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [id](id.md) | [androidJvm]<br>@SerializedName(value = "id")<br>val [id](id.md): [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)? = null |
+| [login](login.md) | [androidJvm]<br>@SerializedName(value = "login")<br>val [login](login.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [nodeId](node-id.md) | [androidJvm]<br>@SerializedName(value = "node_id")<br>val [nodeId](node-id.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [organizationsUrl](organizations-url.md) | [androidJvm]<br>@SerializedName(value = "organizations_url")<br>val [organizationsUrl](organizations-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [receivedEventsUrl](received-events-url.md) | [androidJvm]<br>@SerializedName(value = "received_events_url")<br>val [receivedEventsUrl](received-events-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [reposUrl](repos-url.md) | [androidJvm]<br>@SerializedName(value = "repos_url")<br>val [reposUrl](repos-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [score](score.md) | [androidJvm]<br>@SerializedName(value = "score")<br>val [score](score.md): [Double](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.html)? = null |
+| [siteAdmin](site-admin.md) | [androidJvm]<br>@SerializedName(value = "site_admin")<br>val [siteAdmin](site-admin.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)? = null |
+| [starredUrl](starred-url.md) | [androidJvm]<br>@SerializedName(value = "starred_url")<br>val [starredUrl](starred-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [subscriptionsUrl](subscriptions-url.md) | [androidJvm]<br>@SerializedName(value = "subscriptions_url")<br>val [subscriptionsUrl](subscriptions-url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [type](type.md) | [androidJvm]<br>@SerializedName(value = "type")<br>val [type](type.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [url](url.md) | [androidJvm]<br>@SerializedName(value = "url")<br>val [url](url.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? = null |
+| [userName](user-name.md) | [androidJvm]<br>open override val [userName](user-name.md): [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)? |

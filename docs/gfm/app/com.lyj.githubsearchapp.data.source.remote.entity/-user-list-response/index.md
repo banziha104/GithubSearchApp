@@ -1,0 +1,13 @@
+//[app](../../../index.md)/[com.lyj.githubsearchapp.data.source.remote.entity](../index.md)/[UserListResponse](index.md)
+
+# UserListResponse
+
+[androidJvm]\
+class [UserListResponse](index.md)
+
+## Types
+
+| Name | Summary |
+|---|---|
+| [ItemsItem](-items-item/index.md) | [androidJvm]<br>data class [ItemsItem](-items-item/index.md)(gistsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, reposUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, followingUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, starredUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, login: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, followersUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, type: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, url: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, subscriptionsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, score: [Double](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.html)?, receivedEventsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, avatarUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, eventsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, htmlUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, siteAdmin: [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)?, id: [Long](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html)?, gravatarId: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, nodeId: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?, organizationsUrl: [String](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html)?) : [GithubUserModel](../../com.lyj.githubsearchapp.domain.model/-github-user-model/index.md) |
+| [Response](-response/index.md) | [androidJvm]<br>data class [Response](-response/index.md)(totalCount: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html)?, incompleteResults: [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html)?, items: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)&lt;[UserListResponse.ItemsItem](-items-item/index.md)&gt;?) |
