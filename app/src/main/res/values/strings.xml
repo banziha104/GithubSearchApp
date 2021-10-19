@@ -7,4 +7,6 @@
     <string name="main_input_hint">Github UserName</string>
     <string name="main_empty_result">조회된 유저가 없습니다.</string>
     <string name="main_search_button_text">검색</string>
+
+    <string name="main_fail_insert_or_delete">데이터를 저장하거나 삭제하는데 실패하였습니다</string>
 </resources>

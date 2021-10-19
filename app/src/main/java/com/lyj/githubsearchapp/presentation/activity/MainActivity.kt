@@ -3,18 +3,17 @@ package com.lyj.githubsearchapp.presentation.activity
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.jakewharton.rxbinding4.recyclerview.RecyclerViewScrollEvent
+import com.jakewharton.rxbinding4.recyclerview.scrollEvents
 import com.jakewharton.rxbinding4.view.clicks
-import com.lyj.githubsearchapp.common.extension.android.TabLayoutEventType
-import com.lyj.githubsearchapp.common.extension.android.searchButtonActionObserver
-import com.lyj.githubsearchapp.common.extension.android.selectedObserver
+import com.lyj.githubsearchapp.R
+import com.lyj.githubsearchapp.common.extension.android.*
 import com.lyj.githubsearchapp.common.extension.lang.disposeByOnDestory
 import com.lyj.githubsearchapp.common.rx.RxLifecycleController
 import com.lyj.githubsearchapp.common.rx.RxLifecycleObserver
 import com.lyj.githubsearchapp.databinding.ActivityMainBinding
-import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.repository.CommitResult
 import com.lyj.githubsearchapp.presentation.adapter.UserListAdapter
 import com.lyj.githubsearchapp.presentation.adapter.UserListAdapterDataChanger
@@ -23,6 +22,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.kotlin.Observables
+import io.reactivex.rxjava3.kotlin.merge
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
@@ -74,11 +75,39 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
      *
      * @see [searchButtonActionObserver]
      */
-    private val softKeyboardInputListener : Observable<Unit> by lazy {
+    private val softKeyboardInputObserver: Observable<Unit> by lazy {
         binding
             .mainInputEditText
             .searchButtonActionObserver()
             .disposeByOnDestory(this)
+    }
+
+    /**
+     * Swipe Refresh 동작 옵저버
+     * API 일떄만 Paging을 진행함으로 API로 필터링
+     *
+     * @see [refreshObserver]
+     */
+    private val refreshLayoutObserver: Observable<Unit> by lazy {
+        binding
+            .mainSwipeRefreshLayout
+            .refreshObserver()
+            .throttleFirst(1, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * ScrollView가 하단에 도달했는지 알아보는 옵저버
+     * API 일떄만 Paging을 진행함으로 API로 필터링
+     *
+     * @see [refreshObserver]
+     */
+    private val recyclerEndScollObserver: Observable<RecyclerViewScrollEvent> by lazy {
+        binding
+            .mainUserRecyclerView
+            .scrollEvents()
+            .disposeByOnDestory(this)
+            .filter { !it.view.canScrollVertically(1) && viewModel.latestTabType == MainTabType.API }
+            .throttleFirst(1, TimeUnit.SECONDS)
     }
 
     /**
@@ -114,55 +143,75 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
      * @see [MainViewModel.requestGithubData] 데이터 발행 메소드
      */
     private fun observeUiEventWithAffectListData() {
-        Observable
-            .merge<MainActivityEventType>(
-                tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) }, // tabLayout click
-                searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }, // mainSearchButton click
-                softKeyboardInputListener.map { MainActivityEventType.SearchButtonClicked } // action button click
-            )
+        listOf<Observable<MainActivityEventType>>(
+            tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) }, // tabLayout click
+            searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }, // mainSearchButton click
+            softKeyboardInputObserver.map { MainActivityEventType.SearchButtonClicked }, // action button click
+            refreshLayoutObserver.map { MainActivityEventType.Refresh }, // Swipe Refresh
+            recyclerEndScollObserver.map { MainActivityEventType.EndScroll } // EndScroll
+        )
+            .merge()
+            .throttleFirst(
+                200,
+                TimeUnit.MILLISECONDS
+            ) // 여러 이벤트가 동시발행되서 예기치 못한 예외가 발생할 수 있어 200ms 스로틀링
             .flatMapSingle { event ->
-                Single.zip(
-                    when (event) {
-                        is MainActivityEventType.SearchButtonClicked -> {
-                            viewModel.requestGithubData(
-                                viewModel.latestTabType,
-                                binding.mainInputEditText.text?.toString()
-                            )
-                        }
-                        is MainActivityEventType.TabChanged -> {
-                            val text = binding.mainInputEditText.text
-                            if (event.tabType == MainTabType.API) {
-                                if (text != null) {
-                                    viewModel.requestGithubData(
-                                        event.tabType,
-                                        text.toString()
-                                    )
-                                } else {
-                                    Single.just(mapOf())
-                                }
+                val data = when (event) {
+                    is MainActivityEventType.SearchButtonClicked, MainActivityEventType.Refresh -> {
+                        viewModel.requestGithubData(
+                            viewModel.latestTabType,
+                            binding.mainInputEditText.text?.toString()
+                        )
+                    }
+                    is MainActivityEventType.TabChanged -> {
+                        val text = binding.mainInputEditText.text
+                        if (event.tabType == MainTabType.API) {
+                            if (text != null) {
+                                viewModel.requestGithubData(
+                                    event.tabType,
+                                    text.toString()
+                                )
                             } else {
-                                viewModel.requestGithubData(event.tabType,text?.toString())
+                                Single.just(mapOf())
                             }
+                        } else {
+                            viewModel.requestGithubData(event.tabType, text?.toString())
                         }
-                    },
-                    Single.just(event)
-                ) { data, event ->
-                    data to event
+                    }
+                    is MainActivityEventType.EndScroll -> {
+                        viewModel.requestGithubData(
+                            viewModel.latestTabType,
+                            viewModel.latestSearchKeyword,
+                            viewModel.latestPaging + 1
+                        )
+                    }
                 }
                     .observeOn(AndroidSchedulers.mainThread())
                     .doOnSubscribe { binding.mainProgressBar.visibility = View.VISIBLE } // 데이터 요청 시 ProgressBar VISIBLE
-                    .doOnSuccess { binding.mainProgressBar.visibility = View.GONE }  // 데이터 요청 완료 시 ProgressBar GONE
+                    .doOnSuccess {  // 데이터 요청 완료 시 ProgressBar GONE
+                        binding.mainProgressBar.visibility = View.GONE
+                        binding.mainSwipeRefreshLayout.isRefreshing = false
+                    }
+                    .doOnError { // 데이터 에러 시 ProgressBar GONE
+                        binding.mainProgressBar.visibility = View.GONE
+                        binding.mainSwipeRefreshLayout.isRefreshing = false
+                    }
+
+                Single.zip(data, Single.just(event)) { data, event -> data to event }
             }
             .disposeByOnDestory(this)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ (data, event) ->
                 when (event) {
-                    is MainActivityEventType.SearchButtonClicked -> {
+                    is MainActivityEventType.SearchButtonClicked, is MainActivityEventType.Refresh -> {
                         adapterController.changeData(data)
                     }
                     is MainActivityEventType.TabChanged -> {
                         adapterController.changeData(data)
                         viewModel.latestTabType = event.tabType
+                    }
+                    is MainActivityEventType.EndScroll -> {
+                        adapterController.addData(data)
                     }
                 }
                 binding.mainProgressBar.visibility = View.INVISIBLE
@@ -203,11 +252,12 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                             model,
                             position
                         )
-                        is CommitResult.Failed -> TODO()
+                        is CommitResult.Failed -> longToast(R.string.main_fail_insert_or_delete)
                     }
                 }, {
                     it.printStackTrace()
                 })
+
         }
 }
 
@@ -216,5 +266,7 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
  */
 sealed interface MainActivityEventType {
     object SearchButtonClicked : MainActivityEventType
+    object Refresh : MainActivityEventType
+    object EndScroll : MainActivityEventType
     class TabChanged(val tabType: MainTabType) : MainActivityEventType
 }

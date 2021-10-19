@@ -1,6 +1,8 @@
 package com.lyj.githubsearchapp.presentation.activity
 
 import androidx.annotation.StringRes
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.lyj.githubsearchapp.R
 import com.lyj.githubsearchapp.common.utils.KoreanLanguageUtils
@@ -38,6 +40,16 @@ class MainViewModel @Inject constructor(
     var latestTabType: MainTabType = DEFAULT_TAB
 
     /**
+     * 가장 마지막에 적용된 paging index
+     */
+    var latestPaging : Int = 1
+
+    /**
+     * 가장 마지막에 검색한 데이터
+     */
+    var latestSearchKeyword : String? = ""
+
+    /**
      * [tabType]과 [searchKeyword] 를 기준으로 List에서 사용할 데이터를 요청하는 메소드
      *
      * @param tabType 가장 마지막에 클릭된 탭(검색 버튼 클릭) 또는 지금 클릭된 탭(TabLayout 클릭)
@@ -46,15 +58,19 @@ class MainViewModel @Inject constructor(
      */
     fun requestGithubData(
         tabType: MainTabType,
-        searchKeyword: String? = null
+        searchKeyword: String? = null,
+        page: Int? = null
     ): Single<Map<InitialSound, List<GithubModelWithFavorite>>> {
+
+        latestSearchKeyword = searchKeyword
+
         return when (tabType) {
             MainTabType.API -> {
                 if (searchKeyword == null || searchKeyword.isBlank()) { // API 일때, 검색어가 정확하지 않은 경우 빈 Map 객체 반환
                     return Single.just(mapOf())
                 }
                 Single.zip(
-                    getRemoteUserListUseCase.execute(searchKeyword),
+                    getRemoteUserListUseCase.execute(searchKeyword, page),
                     getLocalUserListUseCase.execute()
                 ) { remoteData, localData ->
                     matchFavorite(

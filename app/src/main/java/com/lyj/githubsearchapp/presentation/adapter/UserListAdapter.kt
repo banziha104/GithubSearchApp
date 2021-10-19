@@ -20,7 +20,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 /**
- * MainActivity 의 mainRecUser 리사이클러뷰에 적용되는 View
+ * MainActivity 의 mainUserRecyclerView 리사이클러뷰에 적용되는 View
  *
  * @param viewModel Adapter에 적용될 Model을 가공하는 클래스
  */
