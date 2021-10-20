@@ -213,6 +213,8 @@ class MainActivityTests {
             .perform(swipeDown())
 
 
+        await(1000)
+        
 //        onView(withId(R.id.mainProgressBar))
 //            .check(matches(isDisplayed()))
 
