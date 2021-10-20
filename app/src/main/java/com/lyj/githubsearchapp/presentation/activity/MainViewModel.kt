@@ -9,8 +9,6 @@ import com.lyj.githubsearchapp.domain.usecase.local.FindLocalDataByUserNameUseCa
 import com.lyj.githubsearchapp.domain.usecase.local.GetLocalUserListUseCase
 import com.lyj.githubsearchapp.domain.usecase.local.InsertOrDeleteUserModelUseCase
 import com.lyj.githubsearchapp.domain.usecase.remote.GetRemoteUserListUseCase
-import com.lyj.githubsearchapp.presentation.activity.MainTabType.API
-import com.lyj.githubsearchapp.presentation.activity.MainTabType.LOCAL
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.core.Single
 import javax.inject.Inject
@@ -18,7 +16,6 @@ import javax.inject.Inject
 /**
  * GithubModel 과 즐겨찾기를 포함하는 타입
  */
-typealias GithubModelWithFavorite = Pair<GithubUserModel, IsFavorite>
 typealias IsFavorite = Boolean
 typealias InitialSound = Char
 
@@ -61,8 +58,6 @@ class MainViewModel @Inject constructor(
         searchKeyword: String? = null,
         page: Int? = null
     ): Single<Map<InitialSound, List<GithubModelWithFavorite>>> {
-
-        latestSearchKeyword = searchKeyword
 
         return when (tabType) {
             MainTabType.API -> {
@@ -108,7 +103,7 @@ class MainViewModel @Inject constructor(
         return splitInitializeSoundData(targetData)
             .mapValues { entry ->
                 entry.value.map {
-                    it to tabType.checkFavorite.func(it, localData)
+                    GithubModelWithFavorite(it,tabType.checkFavorite.func(it, localData))
                 }
             }
     }
@@ -128,6 +123,14 @@ class MainViewModel @Inject constructor(
                 initialSound
             }
 }
+
+/**
+ * GithubUserModel 과 즐겨찾기 여부를 결합한 데이터 클래스
+ */
+data class GithubModelWithFavorite(
+    private val model : GithubUserModel,
+    var isFavorite: IsFavorite
+) : GithubUserModel by model
 
 /**
  * TabLayout 의 타입

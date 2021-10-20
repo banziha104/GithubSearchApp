@@ -1,5 +1,6 @@
 package com.lyj.githubsearchapp.domain.usecase.remote
 
+import com.lyj.githubsearchapp.data.source.remote.service.GithubUserApi
 import com.lyj.githubsearchapp.domain.model.GithubUserModel
 import com.lyj.githubsearchapp.domain.repository.GithubRemoteApiRepository
 import io.reactivex.rxjava3.core.Single
@@ -18,6 +19,6 @@ class GetRemoteUserListUseCase @Inject constructor(
 ){
     fun execute(userName: String, page : Int? = null) : Single<List<GithubUserModel>> =
         githubRemoteApiRepository
-            .requestGetUserList(userName,page ?: 1)
+            .requestGetUserList(userName,page ?: GithubUserApi.DEFAULT_PAGE)
             .subscribeOn(Schedulers.io())
 }

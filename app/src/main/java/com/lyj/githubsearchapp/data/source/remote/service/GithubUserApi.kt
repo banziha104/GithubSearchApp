@@ -10,12 +10,13 @@ interface GithubUserApi{
 
     companion object {
         const val DEFAULT_PER_PAGE = 100
+        const val DEFAULT_PAGE = 1
     }
 
     @GET("search/users")
     fun requestSearchUser(
         @Query("q") q : String,
-        @Query("page") page : Int = 1,
+        @Query("page") page : Int = DEFAULT_PAGE,
         @Query("per_page") perPage : Int = DEFAULT_PER_PAGE,
         @Query("order") order: Order = Order.ASC,
         @Query("sort") sort: Sort = Sort.BEST_MATCH,

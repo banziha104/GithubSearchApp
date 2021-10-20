@@ -14,6 +14,12 @@ class UserListAdapterViewModel(
 ) : UserListAdapterDataChanger {
 
     /**
+     * 현재 데이터가 비어있는
+     */
+    val isDataEmpty: Boolean
+        get() = items.values.flatten().isEmpty()
+
+    /**
      * 데이터 변경을 발행하는 Subject
      */
     val dataEventDriver: BehaviorSubject<List<UserListDataModel>> =
@@ -36,12 +42,13 @@ class UserListAdapterViewModel(
             .map { entry ->
                 entry
                     .value
-                    .sortedBy { (model, _) -> model.userName } // 모델의 userName을 기준으로 정렬
-                    .mapIndexed { index, (model, isFavorite) ->
+                    .sortedBy { model -> model.userName } // 모델의 userName을 기준으로 정렬
+                    .mapIndexed { index, model ->
+                        val isFavorite = model.isFavorite
                         if (index == 0) { // 현재 데이터가 첫 번째인 경우 FirstData로 생성, 아닌 경우 Data로 생성
-                            UserListDataModel.FirstData(model, isFavorite, entry.key)
+                            UserListDataModel.FirstData(model, entry.key)
                         } else {
-                            UserListDataModel.Data(model, isFavorite, entry.key)
+                            UserListDataModel.Data(model, entry.key)
                         }
                     }
             }
@@ -62,7 +69,7 @@ class UserListAdapterViewModel(
 
     override fun notifyRemoveItem(model: UserListDataModel, position: Int) {
         val list = items[model.initialSound]?.toMutableList() ?: return
-        val index = list.indexOfFirst { (userModel) -> userModel.userName == model.userName }.also {
+        val index = list.indexOfFirst { userModel -> userModel.userName == model.userName }.also {
             if (it == -1) {
                 return
             }
@@ -74,15 +81,14 @@ class UserListAdapterViewModel(
 
     override fun notifyChangeItem(model: UserListDataModel, position: Int) {
         val list = items[model.initialSound]?.toMutableList() ?: return
-        val index = list.indexOfFirst { (userModel) -> userModel.userName == model.userName }.also {
+        val index = list.indexOfFirst { userModel -> userModel.userName == model.userName }.also {
             if (it == -1) {
                 return
             }
         }
 
-        list[index] = list[index].let { (model, isFavorite) ->
-            model to !isFavorite
-        }
+        list[index] = list[index].apply { isFavorite = !isFavorite }
+
         items[model.initialSound] = list
         submitEvent()
     }
@@ -94,7 +100,7 @@ class UserListAdapterViewModel(
 interface UserListAdapterDataChanger {
     fun addData(data: Map<InitialSound, List<GithubModelWithFavorite>>) // 데이터가 추가된 경우
     fun changeData(data: Map<InitialSound, List<GithubModelWithFavorite>>) // 전체 데이터 변경이 있는 경우
-    fun notifyRemoveItem(model: UserListDataModel, position: Int) // 아이템 한개만 삭제되는 경우
+    fun notifyRemoveItem(model: UserListDataModel, position: Int)  // 아이템 한개만 삭제되는 경우
     fun notifyChangeItem(model: UserListDataModel, position: Int) // 아이템 한개만 변경된 경우
 }
 
@@ -110,10 +116,10 @@ sealed interface UserListDataModel : GithubUserModel {
      *
      * @param githubUserModel GithubuserModel 구현을 위임 하기 위해 전달받는 원본 모델 객체
      */
-    class FirstData(
-        githubUserModel: GithubUserModel,
-        override var isFavorite: Boolean,
-        override val initialSound: Char
+    data class FirstData(
+        private val githubUserModel: GithubModelWithFavorite,
+        override val initialSound: Char,
+        override var isFavorite: Boolean = githubUserModel.isFavorite,
     ) : UserListDataModel, GithubUserModel by githubUserModel
 
     /**
@@ -121,9 +127,9 @@ sealed interface UserListDataModel : GithubUserModel {
      *
      *  @param githubUserModel GithubuserModel 구현을 위임 하기 위해 전달받는 원본 모델 객체
      */
-    class Data(
-        githubUserModel: GithubUserModel,
-        override var isFavorite: Boolean,
-        override val initialSound: Char
+    data class Data(
+        private val githubUserModel: GithubModelWithFavorite,
+        override val initialSound: Char,
+        override var isFavorite: Boolean = githubUserModel.isFavorite,
     ) : UserListDataModel, GithubUserModel by githubUserModel
 }

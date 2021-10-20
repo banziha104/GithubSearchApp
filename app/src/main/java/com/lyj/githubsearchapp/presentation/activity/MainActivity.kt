@@ -1,10 +1,14 @@
 package com.lyj.githubsearchapp.presentation.activity
 
+import android.content.Context
 import android.os.Bundle
+import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.jakewharton.rxbinding4.recyclerview.RecyclerViewScrollEvent
 import com.jakewharton.rxbinding4.recyclerview.scrollEvents
 import com.jakewharton.rxbinding4.view.clicks
@@ -24,11 +28,19 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.kotlin.merge
 import io.reactivex.rxjava3.schedulers.Schedulers
+import retrofit2.HttpException
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), RxLifecycleController {
     override val rxLifecycleObserver: RxLifecycleObserver = RxLifecycleObserver(this)
+
+    companion object {
+        const val EVENT_THROTTLE_MILL = 500L // 각 이벤트간에 발행 간격
+        const val RETRY_UI_EVENT_ON_ERROR = 3L // UI 이벤트 에러 발생시 최대 재구독 횟수
+        const val INCREMENT_PAGE_COUNT = 1 // 현재 페이지에서 다음 페이지 간의 차이
+    }
 
     private val viewModel: MainViewModel by viewModels()
     private val binding: ActivityMainBinding by lazy {
@@ -60,25 +72,31 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     }
 
     /**
-     * 검색 버튼 클릭 옵저버
-     */
-    private val searchButtonClickObserver: Observable<Unit> by lazy {
-        binding
-            .mainBtnSearch
-            .clicks()
-            .disposeByOnDestory(this)
-    }
-
-    /**
-     * Soft 키보드에서 Action 버튼 클릭 옵저버
+     * Soft 키보드에서 Action 버튼 클릭 옵저버과 검색 버튼 클릭 옵저
      *
      * @see [searchButtonActionObserver]
      */
-    private val softKeyboardInputObserver: Observable<Unit> by lazy {
-        binding
-            .mainInputEditText
-            .searchButtonActionObserver()
-            .disposeByOnDestory(this)
+    private val searchButtonClickObserver: Observable<Unit> by lazy {
+        listOf<Observable<Unit>>(
+            binding
+                .mainInputEditText
+                .searchButtonActionObserver()
+                .disposeByOnDestory(this),
+            binding
+                .mainBtnSearch
+                .clicks()
+                .disposeByOnDestory(this)
+        )
+            .merge()
+            .filter {
+                val text = binding.mainInputEditText.text?.toString()
+                if (viewModel.latestTabType == MainTabType.API && text.isNullOrBlank()) {
+                    longToast(R.string.main_api_text_not_invalidated)
+                    false
+                } else {
+                    true
+                }
+            }
     }
 
     /**
@@ -91,7 +109,6 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         binding
             .mainSwipeRefreshLayout
             .refreshObserver()
-            .throttleFirst(1, TimeUnit.MILLISECONDS)
     }
 
     /**
@@ -105,8 +122,7 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
             .mainUserRecyclerView
             .scrollEvents()
             .disposeByOnDestory(this)
-            .filter { !it.view.canScrollVertically(1) && viewModel.latestTabType == MainTabType.API }
-            .throttleFirst(1, TimeUnit.SECONDS)
+            .filter { !it.view.canScrollVertically(RecyclerView.VERTICAL) && viewModel.latestTabType == MainTabType.API }
     }
 
     /**
@@ -126,6 +142,7 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     private fun initializeView() {
         binding.mainUserRecyclerView.apply {
             adapter = userListAdapter
+//            layoutManager = LinearLayoutManagerWrapper(this@MainActivity)
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
     }
@@ -145,48 +162,36 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
         listOf<Observable<MainActivityEventType>>(
             tabLayoutItemClickedObserver.map { MainActivityEventType.TabChanged(it) }, // tabLayout click
             searchButtonClickObserver.map { MainActivityEventType.SearchButtonClicked }, // mainSearchButton click
-            softKeyboardInputObserver.map { MainActivityEventType.SearchButtonClicked }, // action button click
             refreshLayoutObserver.map { MainActivityEventType.Refresh }, // Swipe Refresh
             recyclerEndScollObserver.map { MainActivityEventType.EndScroll } // EndScroll
         )
             .merge()
             .throttleFirst(
-                200,
+                EVENT_THROTTLE_MILL,
                 TimeUnit.MILLISECONDS
             ) // 여러 이벤트가 동시발행되서 예기치 못한 예외가 발생할 수 있어 200ms 스로틀링
-            .flatMapSingle { event ->
+            .flatMapSingle { event -> // 데이터 요청 부분
                 val data = when (event) {
                     is MainActivityEventType.SearchButtonClicked, MainActivityEventType.Refresh -> {
-                        viewModel.requestGithubData(
-                            viewModel.latestTabType,
-                            binding.mainInputEditText.text?.toString()
-                        )
+                        val searchKeyword = binding.mainInputEditText.text?.toString()
+                        viewModel.latestSearchKeyword = searchKeyword
+                        viewModel.requestGithubData(viewModel.latestTabType, searchKeyword)
                     }
-                    is MainActivityEventType.TabChanged -> {
-                        val text = binding.mainInputEditText.text
-                        if (event.tabType == MainTabType.API) {
-                            if (text != null) {
-                                viewModel.requestGithubData(
-                                    event.tabType,
-                                    text.toString()
-                                )
-                            } else {
-                                Single.just(mapOf())
-                            }
-                        } else {
-                            viewModel.requestGithubData(event.tabType, text?.toString())
-                        }
-                    }
-                    is MainActivityEventType.EndScroll -> {
-                        viewModel.requestGithubData(
-                            viewModel.latestTabType,
-                            viewModel.latestSearchKeyword,
-                            viewModel.latestPaging + 1
-                        )
-                    }
+                    is MainActivityEventType.TabChanged -> viewModel.requestGithubData(
+                        event.tabType,
+                        viewModel.latestSearchKeyword
+                    )
+                    is MainActivityEventType.EndScroll -> viewModel.requestGithubData(
+                        viewModel.latestTabType,
+                        viewModel.latestSearchKeyword,
+                        viewModel.latestPaging + INCREMENT_PAGE_COUNT
+                    )
+
                 }
                     .observeOn(AndroidSchedulers.mainThread())
-                    .doOnSubscribe { binding.mainProgressBar.visibility = View.VISIBLE } // 데이터 요청 시 ProgressBar VISIBLE
+                    .doOnSubscribe {
+                        binding.mainProgressBar.visibility = View.VISIBLE
+                    } // 데이터 요청 시 ProgressBar VISIBLE
                     .doOnSuccess {  // 데이터 요청 완료 시 ProgressBar GONE
                         binding.mainProgressBar.visibility = View.GONE
                         binding.mainSwipeRefreshLayout.isRefreshing = false
@@ -199,23 +204,42 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                 Single.zip(data, Single.just(event)) { data, event -> data to event }
             }
             .disposeByOnDestory(this)
+            .retry(RETRY_UI_EVENT_ON_ERROR)
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ (data, event) ->
+            .subscribe({ (data, event) -> // 데이터 처리 부분
                 when (event) {
                     is MainActivityEventType.SearchButtonClicked, is MainActivityEventType.Refresh -> {
                         adapterController.changeData(data)
+                        controlViewVisibilityAndEmptyText(viewModel.latestTabType, data)
                     }
                     is MainActivityEventType.TabChanged -> {
                         adapterController.changeData(data)
                         viewModel.latestTabType = event.tabType
+                        controlViewVisibilityAndEmptyText(event.tabType, data)
                     }
                     is MainActivityEventType.EndScroll -> {
                         adapterController.addData(data)
                     }
                 }
                 binding.mainProgressBar.visibility = View.INVISIBLE
-            }, {
-                it.printStackTrace()
+            }, { error ->
+                when (error) {
+                    is UnknownHostException -> {
+                        longToast(R.string.exception_unknown_host_exception)
+                    }
+                    is HttpException -> {
+                        longToast(
+                            String.format(
+                                getString(R.string.exception_http_exception),
+                                error.code()
+                            )
+                        )
+                    }
+                    else -> {
+                        longToast(R.string.exception_api_common)
+                    }
+                }
+                error.printStackTrace()
             })
     }
 
@@ -227,7 +251,7 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     private fun getListItemClickObserver(): UserListAdapter.OnUserListAdapterItemClickedObserver =
         UserListAdapter.OnUserListAdapterItemClickedObserver { itemClickObserver ->
             itemClickObserver
-                .throttleFirst(500, TimeUnit.MILLISECONDS)
+                .throttleFirst(EVENT_THROTTLE_MILL, TimeUnit.MILLISECONDS)
                 .observeOn(Schedulers.io())
                 .flatMapSingle { (position, model) ->
                     Single.zip(
@@ -243,6 +267,9 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                         is CommitResult.Deleted -> {
                             if (viewModel.latestTabType == MainTabType.LOCAL) {
                                 adapterController.notifyRemoveItem(model, position)
+                                if (adapterViewModel.isDataEmpty){ // 삭제 후 데이터가 비어있다면
+                                    controlViewVisibilityAndEmptyText(viewModel.latestTabType, mapOf<Any?,Any?>()) // 빈 데이터 전달
+                                }
                             } else {
                                 adapterController.notifyChangeItem(model, position)
                             }
@@ -258,6 +285,25 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
                 })
 
         }
+
+    /**
+     * [data] 가 비어있는지 여부에 따라 View 의 Visibility 를 관리
+     * 데이터가 비어있다면  [currentTabType] 에 따라 EmptyTextView 의 메세지를 관리
+     *
+     * @param currentTabType 현재 탭 타입
+     * @param data 전달 받은 데이터
+     */
+    private fun controlViewVisibilityAndEmptyText(currentTabType: MainTabType, data: Map<*, *>) {
+        val isDataEmpty = data.isEmpty()
+        binding.mainUserRecyclerView.visibility = if (!isDataEmpty) View.VISIBLE else View.GONE
+        binding.mainTxtEmpty.visibility = if (isDataEmpty) View.VISIBLE else View.GONE
+        if (isDataEmpty) {
+            val stringResource =
+                if (currentTabType == MainTabType.API) R.string.main_empty_text_api else R.string.main_empty_text_local
+            binding.mainTxtEmpty.text =
+                String.format(getString(R.string.main_empty_text_base), getString(stringResource))
+        }
+    }
 }
 
 /**

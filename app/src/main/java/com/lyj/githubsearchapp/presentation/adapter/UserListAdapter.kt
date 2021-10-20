@@ -1,5 +1,6 @@
 package com.lyj.githubsearchapp.presentation.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,12 +38,12 @@ class UserListAdapter(
             .observeOn(Schedulers.computation())
             .map { newItems ->
                 val diff = UserListDataDiffUtils(items, newItems)
-                items = newItems
-                DiffUtil.calculateDiff(diff)
+                DiffUtil.calculateDiff(diff) to newItems
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ result ->
+            .subscribe({ (result,newItems) ->
                 result.dispatchUpdatesTo(this)
+                items = newItems
             }, {
                 it.printStackTrace()
             })
