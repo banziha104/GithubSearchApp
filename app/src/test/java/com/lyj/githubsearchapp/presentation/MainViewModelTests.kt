@@ -67,7 +67,7 @@ class MainViewModelTests {
             .assertValue {
                 it.isNotEmpty() && it.all { map ->
                     map.value.all { item ->
-                        item.first.userName!!.startsWith(
+                        item.userName!!.startsWith(
                             map.key
                         )
                     }
@@ -101,7 +101,7 @@ class MainViewModelTests {
             .assertValue {
                 it.isNotEmpty() && it.all { map ->
                     map.value.all { item ->
-                        item.first.userName!!.startsWith(
+                        item.userName!!.startsWith(
                             map.key
                         )
                     }
