@@ -2,6 +2,8 @@ package com.lyj.githubsearchapp.module
 
 import android.content.Context
 import android.widget.Toast
+import com.lyj.githubsearchapp.R
+import com.lyj.githubsearchapp.common.extension.android.longToast
 import com.lyj.githubsearchapp.data.source.remote.GithubApiGenerator
 import com.lyj.githubsearchapp.data.source.remote.ServiceGenerator
 import com.lyj.githubsearchapp.data.source.remote.interceptor.GithubHeaderInterceptor
@@ -45,7 +47,7 @@ class NetworkModule {
             .addInterceptor(NetworkConnectionInterceptor(context,NetworkConnectionInterceptor.OnCheckNetworkConnection { isNetworkConnetable ->
                 if (!isNetworkConnetable)
                 MainScope().launch(Dispatchers.Main) {
-                    Toast.makeText(context,"네트워크가 가용하지 않습니다. 네트워크 상태를 확인해주세요", Toast.LENGTH_LONG).show()
+                    context.longToast(R.string.network_not_reachable)
                 }
             }))
             .addInterceptor(GithubHeaderInterceptor(GithubApiGenerator.HEADER_MAP))

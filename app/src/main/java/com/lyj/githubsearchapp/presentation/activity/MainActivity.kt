@@ -37,9 +37,9 @@ class MainActivity : AppCompatActivity(), RxLifecycleController {
     override val rxLifecycleObserver: RxLifecycleObserver = RxLifecycleObserver(this)
 
     companion object {
-        const val EVENT_THROTTLE_MILL = 500L // 각 이벤트간에 발행 간격
-        const val RETRY_UI_EVENT_ON_ERROR = 3L // UI 이벤트 에러 발생시 최대 재구독 횟수
-        const val INCREMENT_PAGE_COUNT = 1 // 현재 페이지에서 다음 페이지 간의 차이
+        private const val EVENT_THROTTLE_MILL = 500L // 각 이벤트간에 발행 간격
+        private const val RETRY_UI_EVENT_ON_ERROR = 3L // UI 이벤트 에러 발생시 최대 재구독 횟수
+        private const val INCREMENT_PAGE_COUNT = 1 // 현재 페이지에서 다음 페이지 간의 차이
     }
 
     private val viewModel: MainViewModel by viewModels()

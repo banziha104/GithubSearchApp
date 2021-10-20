@@ -15,11 +15,12 @@
     <string name="main_fail_insert_or_delete">데이터를 저장하거나 삭제하는데 실패하였습니다</string>
     <string name="main_api_text_not_invalidated">API로 검색할 텍스트가 옳바르지 않습니다.</string>
 
-<!--    Exception-->
-
+    <!--    Exception-->
     <string name="exception_api_common">API 요청에 실패하였습니다</string>
     <string name="exception_not_declared">알 수 없는 에러가 발생하였습니다.</string>
     <string name="exception_unknown_host_exception">API 요청에 실패하였습니다. Host를 찾을 수 없습니다.</string>
     <string name="exception_http_exception">API 요청에 실패하였습니다 %d.</string>
 
+    <!-- Network -->
+    <string name="network_not_reachable">네트워크가 가용하지 않습니다. 네트워크 상태를 확인해주세요</string>
 </resources>
